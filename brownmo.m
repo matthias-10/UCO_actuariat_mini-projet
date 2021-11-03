@@ -1,5 +1,16 @@
-% n trajectoires
+mu = -2;
+sigma = 0.2;
+P0 = 40;
 
+T = 1/12;
+t0=0;
+n=2^8;
+t = t0:(T/n):T;
+nt = 50;
+
+
+% n trajectoires
+plot(1); %pour effacer le plot
 hold on %pour faire plusieurs plots
 
 for i = 1:nt
