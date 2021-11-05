@@ -1,23 +1,30 @@
-mu = -2;
+mu = 2;
 sigma = 0.2;
 P0 = 40;
 
 T = 1/12;
 t0=0;
 n=2^8;
-t = t0:(T/n):T;
-nt = 50;
+dt = ((T-t0)/n);
+t = t0:dt:T;
+
+nt = 30;
 
 
 % n trajectoires
-plot(1); %pour effacer le plot
+plot(P0); %pour effacer le plot
 hold on %pour faire plusieurs plots
+x.ax = t; % x-axe
+
+axis([0 T P0+mu*(-2) P0+mu*10]); %x-axe limits
 
 for i = 1:nt
-    plot(brownmo(P0, mu, sigma ,t0, T, n))
+    plot(x.ax, brownmo(P0, mu, sigma ,t0, T, n)) %brownmo est definie en bas
 end
 
 hold off
+
+% tic toc, comparer avec r
 
 
 disp("fini")
@@ -33,3 +40,7 @@ function S = brownmo(X0, mu, sigma, t0, t, n) %x0
   end
   S = X0 * exp((mu-(sigma^2)/2)*(tseq-t0)+sigma*W);
 end
+
+
+
+
