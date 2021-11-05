@@ -34,21 +34,23 @@ x = c(X0, mu*dt+sigma*sqrt(dt)*rnorm(n, mean = 0, sd = 1))
 Xt = cumsum(x)
 plot(t, Xt, type = "l", xlab = "time")
 
+
+
+B = gbm(x0 = 1, mu = 1, sigma = 0.5, t0 = 0, t = 1, n = 1000)
+plot(B)
+
+start_time = Sys.time()
+
 gbm = function(x0, mu, sigma, t0, t, n){
   delta = (t-t0)/n
   W = numeric(n+1)
   tseq = seq(t0,t,length = n+1)
   for(i in 2:(n+1))
     W[i] = W[i-1]+rnorm(1)*sqrt(delta)
-  S = X0 * exp((mu-sigma^2)/2*(tseq-t0)+sigma*W)
+  S = x0 * exp((mu-sigma^2)/2*(tseq-t0)+sigma*W)
   X = ts(S, start = t0, deltat = delta)
   return(X)
 }
-
-B = gbm(x0 = 1, mu = 1, sigma = 0.5, t0 = 0, t = 1, n = 1000)
-plot(B)
-
-
 
 mu = 0.16
 sigma = 0.2
@@ -68,3 +70,7 @@ ymax=max(X)
 ymin=min(X)
 plot(t, X[1,], t = "l", ylim = c(ymin, ymax), col=1, ylab ="price P(t)", xlab = "temps")
 for(i in 2:nt){lines(t, X[i,], t="l", ylim = c(ymin, ymax), col = i)}
+mean(X[,n+1])
+
+end_time = Sys.time()
+end_time-start_time
