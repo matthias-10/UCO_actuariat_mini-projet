@@ -1,3 +1,5 @@
+tic
+
 mu = 2;
 sigma = 0.2;
 P0 = 40;
@@ -16,7 +18,7 @@ plot(P0); %pour effacer le plot
 hold on %pour faire plusieurs plots
 x.ax = t; % x-axe
 
-axis([0 T P0+mu*(-2) P0+mu*10]); %x-axe limits
+axis([0 T P0+mu*(-2) P0+mu*8]); %x-axe limits
 
 for i = 1:nt
     plot(x.ax, brownmo(P0, mu, sigma ,t0, T, n)) %brownmo est definie en bas
@@ -26,8 +28,10 @@ hold off
 
 % tic toc, comparer avec r
 
+duree= toc;
+disp(sprintf('%d trajectoires', nt));
+disp(sprintf('Fini en %0.5g', duree));
 
-disp("fini")
 
 
 function S = brownmo(X0, mu, sigma, t0, t, n) %x0 
@@ -39,8 +43,5 @@ function S = brownmo(X0, mu, sigma, t0, t, n) %x0
     W(i) = W(i-1)+normrnd(0,1)*sqrt(delta);
   end
   S = X0 * exp((mu-(sigma^2)/2)*(tseq-t0)+sigma*W);
+
 end
-
-
-
-
