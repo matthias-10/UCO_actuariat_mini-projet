@@ -18,9 +18,9 @@ tic
 dt = ((T-t0)/n);
 t = t0:dt:T;
 
-S_sim = zeros(length(t),nt);
+S = zeros(length(t),nt);
 for i = 1:nt
-    S_sim(:,i) = brownmo(S0, r, sigma ,t0, T, n); %brownmo est definie en bas
+    S(:,i) = brownmo(S0, r, sigma ,t0, T, n); %brownmo est definie en bas
 end
 
 duree= toc; 
@@ -34,13 +34,13 @@ tiledlayout(3,1)
 
 x_ax = t; % x-axe
 
-axis([0 T 0.8*min(min(S_sim)) 1.5*max(max(S_sim))]) %x-axe limits
+axis([0 T 0.8*min(min(S)) 1.5*max(max(S))]) %x-axe limits
 %axis([0 T S0-sigma*n S0*(1+r)^(T-t0)+sigma*n]); 
 
 nexttile
 hold on
 
-plot(x_ax,S_sim);
+plot(x_ax,S);
 
 % pour comparison, si j'epargne pour le taux r:
 %plot([t0 T], [S0 S0*(1+r)^(T-t0)], "--k"); % obligation
@@ -66,22 +66,27 @@ fprintf('Avec S0 de %d, K = int(obligation,t0,T)/(T-t0) = %0.5g \n', S0, K);
 %fplot(obligation, [t0 T], "-k"); % obligation
 plot([t0 T], [K K], "--k"); % y=K
 
-plot(x_ax(1:(n+1)), MoyMob(S_sim, n), ':');
+plot(x_ax(1:(n+1)), MoyMob(S, n), ':');
 %plot(x_ax,S_sim);
-
-% calculer X_pr
-
 
 % calculer le prix de l'option C_t = max(0, X_t-S_t)
 
-Xn = MoyMob(S_sim, n);
+% calculer X_T
+Xn = MoyMob(S, n);
 
-legend("K","moyenne a temps t")
+% calculer X_T'
+X_pr = zeros(N,nt);
+for i = 1:N %vectoriel?
+    X_pr(i,:) = S(floor(i*n/N),:);
+end
+X_pr = (1/N)*sum(X_pr, 1);
+
+legend("obligation","K","moyenne a temps t",'location','northwest')
 hold off
 nexttile
 hold on
 
-plot(x_ax, Xn-S_sim);
+plot(x_ax, Xn-S);
 plot([t0 T], [0 0], ":k"); % y=zero
 
 legend("","difference X_t - S_t", 'Location','southwest')
@@ -103,7 +108,7 @@ end
 plot(x_ax, C);
 plot([t0 T], [0 0], ":k"); % y=zero
 
-legend("C (valeur a temps t0)")
+legend("C (valeur a temps t0)",'location','northwest')
 hold off
 
 % Il y a trop de valeurs >0 ? r?
@@ -114,7 +119,7 @@ hold off
 
 % supprime la valeur initiale
 Xn    = Xn(2:end,:);
-S_sim = S_sim(2:end,:);
+S = S(2:end,:);
 C     = C(2:end,:);
 
 % Calculer C(S_0)
