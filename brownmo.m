@@ -2,12 +2,17 @@
 
 r = 0.05;
 sigma = 0.02;
-T = 100;
+T = 10;
 n=2^4;
-nt = 5; % nombre de trajectoires
+nt = 500; % nombre de trajectoires
 N = 5; % pour le cas discret, verifier que N << n
 S0 = 40;
 t0=0;
+
+% calculer K
+
+K = S0*exp(r*T);
+%K = int(obligation,t0,T)/(T-t0);
 
 %% Simulation
 
@@ -53,10 +58,6 @@ hold off
 nexttile
 hold on
 
-% calculer K
-
-%K = S0*exp(r*T);
-K = int(obligation,t0,T)/(T-t0);
 fplot(obligation, [t0 T], "-k"); 
 
 fprintf('Avec S0 de %d, K = int(obligation,t0,T)/(T-t0) = %0.5g \n', S0, K);
@@ -108,24 +109,39 @@ end
 plot(x_ax, C);
 plot([t0 T], [0 0], ":k"); % y=zero
 
-legend("C (valeur a temps t0)",'location','northwest')
-hold off
-
 % Il y a trop de valeurs >0 ? r?
 % pour T>10 il y a trop de valeurs = 0?
 
 
 %% Monte-Carlo
 
+%cont = input("Voici en noir la moyenne de nt C(T) dans le dernier graphe");
+
+% E_\pi (e^-rT (X_T - K)^+ / F_O) ~ 1/nt \sum {C(T)}
+
 % supprime la valeur initiale
-Xn    = Xn(2:end,:);
-S = S(2:end,:);
-C     = C(2:end,:);
+%Xn    = Xn(2:end,:);
+%S = S(2:end,:);
+%C     = C(2:end,:);
 
 % Calculer C(S_0)
-mean(C, 2);
+%mean(C, 2);
 
+% Calculer C(T)
+C_chapeau = mean(C(end,:));
+fprintf('%0.5g = La moyennde de nt prix C(T)\n', C_chapeau);
+plot([0.9*T 1.1*T], [C_chapeau C_chapeau], "-k"); % y=C_chapeau
 
+legend("C (valeur a temps t0)",'location','southwest')
+hold off
+%cont = input("Veuillez-vous continuer ? Les graphes seront effacés");
+
+nexttile
+hold on
+%C_end = reshape(C(end,:),[],1);
+%C_end = disp( C(end,:) );
+histogram( C(end,:) );
+plot([C_chapeau C_chapeau], [0 nt/sqrt(sigma*nt)], "-k");
 %%%%%%%%%%%%%%%
 %% fonctions %%
 %%%%%%%%%%%%%%%
