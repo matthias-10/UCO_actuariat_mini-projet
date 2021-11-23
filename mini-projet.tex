@@ -80,10 +80,75 @@
 
   N. d'étudiant: XXXXXXX et 313411\\
   Université Catholique de l'Ouest\\
-  Mathématiques financières\\
+  Mathématiques financières
+
 \end{center}
 
 \newpage
+
+\section{Calculer le prix du sous-jacent}
+
+\begin{equation} \label{1} 
+dS_t~=~S_t(rdt+\sigma \sqrt{S_t} dW_t) 
+\end{equation}
+
+\begin{equation} \label{2}
+\begin{multlined}
+     \iff \frac{dS_t}{S_t} = rdt+\sigma \sqrt{S_t} dW_t
+\end{multlined}
+\end{equation}
+
+
+On prend l'équation 1:
+\begin{equation} \label{3}
+\begin{multlined}
+= dS_t~=~S_trdt+\sigma S_t^{1.5} dW_t \\
+\text{Puis} \\
+d \langle S_t,~~ S_t\rangle 
+=\langle dS_t,~~ dS_t\rangle ~=\\
+=\langle S_trdt+\sigma S_t^{1.5} dW_t,~~
+         S_trdt+\sigma S_t^{1.5} dW_t \rangle ~=\\
+=\langle \sigma S_t^{1.5} dW_t,~~
+         \sigma S_t^{1.5} dW_t \rangle ~=\\
+=S_t^3 \sigma^2 \langle dW_t,~~ dW_t \rangle ~=\\
+=S_t^3 \sigma^2 dt
+\end{multlined}
+\end{equation}
+
+
+
+\begin{equation} \label{4}
+\begin{multlined}
+\text{On pose: } X_t = ln(S_t) \\
+\text{Formule d'Ito: } dln(S_t) = \frac{dS_t}{S_t} + \frac{1}{2} \frac{-1}{S_t^2}d \langle S_t, ~S_t \rangle \\
+\text{Avec les équations 2 et 3:} \\
+dln(S_t) = rdt + \sigma \sqrt{S_t} dW_t - \frac{1}{2}S_t \sigma^2 dt ~= \\
+= (r - \frac{1}{2}S_t\sigma^2)dt + \sigma\sqrt{S_t}dW_t)
+\end{multlined}
+\end{equation}
+
+
+\begin{equation} \label{5}
+\begin{multlined}
+ln( \frac{S_t}{S_0} ) = ln(S_t)-ln(S_0) = \int_0^t dln(S_u) = \\
+= \int_0^t (r-\frac{1}{2} S_t \sigma^2)du~+~\int_0^t \sigma \sqrt{S_t}dW_t \\
+\dots
+\end{multlined}
+\end{equation}
+
+Donc on ne peut pas facilement dériver une formule pour le prix qui dépend que des variables fixées, mais on peut le simuler pas à pas avec (1):
+
+\begin{equation} \label{6}
+\begin{multlined}
+S_0 ~\text{soit connu} \\
+dS_0 = S_0(rdt + \sigma \sqrt{S_0} dW_0) \\
+S_1 \approx S_0 + dS_0 \\
+dS_1 = S_1(rdt + \sigma \sqrt{S_1} dW_1) \\
+S_2 \approx S_1 + dS_1 \\
+\dots
+\end{multlined}
+\end{equation}
+
 
 
 
@@ -97,6 +162,104 @@
 
 \section{Code Matlab}
 \lstinputlisting{mini_projet.m}
+
+\section{Code VBA}
+\begin{lstlisting}[
+    breaklines=true,
+    tabsize=3,
+    showstringspaces=false
+    extendedchars=\true,
+    language={[Visual]Basic},
+    frame=single,
+    framesep=3pt,%expand outward.
+    framerule=0.4pt,%expand outward.
+    xleftmargin=3.4pt,%make the frame fits in the text area. 
+    xrightmargin=3.4pt,%make the frame fits in the text area.
+    ]
+
+
+Rem Attribute VBA_ModuleType=VBAModule
+Option VBASupport 1
+Sub Macro1()
+
+Dim T, n, nt, Nd As Integer
+Dim r, sigma, S0, t0 As Double
+
+Dim i, j As Integer
+
+
+r = Range("A2").Value
+sigma = Range("A3").Value
+T = Range("A4").Value
+n = Range("A5").Value
+nt = Range("A6").Value
+Nd = Range("A7").Value
+S0 = Range("A8").Value
+t0 = Range("A9").Value
+
+Dim dt As Double
+dt = ((T - t0) / n)
+
+Dim temps() As Double
+ReDim temps(n + 1)
+temps(0) = t0
+For j = 1 To n + 1
+    temps(j) = temps(j - 1) + dt
+Next
+
+
+Range("I2:I" & UBound(temps) + 1) = WorksheetFunction.Transpose(temps)
+
+Dim S() As Double
+ReDim S(1 To n + 1, 1 To nt)
+Dim W As Double
+Dim x As Double
+
+For j = 0 To nt - 1
+For i = 0 To n
+
+  If i = 0 Then
+    W = 0
+    Else
+    W = W + Sqr(-2 * Log(Rnd())) * Cos(6.283185307 * Rnd()) * Sqr(dt)
+  End If
+  
+  x = S0 * Exp((r - (sigma ^ 2) / 2) * (temps(i) - t0) + sigma * W)
+  Cells(2 + i, 10 + j).Value = x ' copier s dans la worksheet
+  'S(i, j) = x
+
+Next
+Next
+
+
+
+'Cells(i, 3).Value =
+
+
+'S = zeros(length(t),nt);
+'for i = 1:nt
+'    S(:,i) = brownmo(S0, r, sigma ,t0, T, n); %brownmo est definie en bas
+'End
+
+'function S = brownmo(X0, mu, sigma, t0, T, n) %x0
+
+'  delta = (T-t0)/n;
+'  W = zeros(1,n+1);
+'  tseq = t0:((T-t0)/n):T;
+'  for i = 2:(n+1)
+'    W(i) = W(i-1)+normrnd(0,1)*sqrt(delta);
+'  End
+'  S = X0 * exp( (mu-(sigma^2)/2) * (tseq-t0) + sigma*W );
+
+MsgBox "Simule pour " & nt & " trajectoires."
+
+'Sheets("Dashboard").Activate
+'Range("Parametres").Select
+'Range("A13").Value = T
+
+End Sub
+\end{lstlisting}
+
 
 
 \end{document}

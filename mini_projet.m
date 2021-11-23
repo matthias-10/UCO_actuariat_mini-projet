@@ -18,38 +18,48 @@ S0 = 40;                % Prix initial du sous jacent
 N = 5;                  % Nombre des sous-intervalles % verifier que N << n => a faire: ecrire un test
 K = 50;                 % Prix d'exercice de l'option
 
-r = 0.05;               % Taux d'interet en univers risque neutre
-sigma = 0.04;           % Variance fixe de la mouvement brownien
+r = 0.05;               % Taux d'interet sous risque neutre
+sigma = 0.04/sqrt(S0);  % Variance partie fixe
 
 t0 = 0;                 % Debut de la periode
-n = 2^10;               % Nombre de intervalles
+n = 2^4;               % Nombre de intervalles
 T = 3;                  % Fin de la periode
-nt = 100;               % Nombre de trajectoires
+nt = 5;               % Nombre de trajectoires
 
 
 starttime = datetime('now');
-fprintf('La programme a demarre a %s', starttime);
-fprintf('%d -> nombre de trajectoires', nt);
-fprintf('%d -> Prix initial du sous jacent', S0)
-fprintf('%0.5g -> Prix d exercice de l option', K);
+fprintf('La programme a demarre a %s \n', starttime);
+fprintf('%d -> Nombre de trajectoires \n', nt);
+fprintf('%d -> Prix initial du sous jacent \n', S0)
+syms func(x)
+obligation(x) = S0*(1+r)^(x-t0);
+%K = int(obligation,t0,T)/(T-t0);
+bonds_T = obligation(T);
+fprintf('%0.5g -> Prix d''une obligation a T\n', bonds_T)
+fprintf('%0.5g -> Prix d''exercice de l''option \n', K);
+fprintf(' . . . ')
 tic
 
 
 %% ~~~~~~~~~~~~~~~~~~~~ Simulation ~~~~~~~~~~~~~~~~~~~~~ %%
 
 
-syms func(x)
-obligation(x) = S0*(1+r)^(x-t0);
-%K = int(obligation,t0,T)/(T-t0);
 
-dt = ((T-t0)/n);
+
+dt = (T-t0)/n;
 t = t0:dt:T;
 
-S = zeros(length(t),nt);
-for i = 1:nt
-    S(:,i) = brownmo(S0, r, sigma ,t0, T, n);
+S = zeros(n+1,nt);
+S(1,:) = S0;
+
+for i = 2:(n+1)
+    dW_t = normrnd(zeros(1,nt),1) * sqrt(dt);
+    dSi = S(i-1,:).*( r*dt + sigma*sqrt(S(i-1,:)).*dW_t );
+    S(i,:) = S(i-1,:) + dSi;
 end
-plot(S)
+
+
+
 
 %% ~~~~~~~~~~~~~~~~~~ calcul de X_t ~~~~~~~~~~~~~~~~~~~~ %%
 
@@ -67,7 +77,8 @@ vecC_inf = vecX_t-K;
 vecC_inf = vecC_inf .* ( vecC_inf >= 0 );
 
 C_inf = mean(vecC_inf);
-%C_inf * exp(-rT) est une martingale donc E[exp(-rT)*C_inf]= C_inf(S_0)
+%C_inf * exp(-rT) est une martingale donc 
+% E[exp(-rT)*C_inf]= C_inf(S_0)
 C_inf_0 = exp(-r*T)*C_inf;
 
 %% ~~~~~~~~~~~~~~~~ calcul de X_t_prim ~~~~~~~~~~~~~~~~~ %%
@@ -84,10 +95,11 @@ vecC_N = vecC_N .* ( vecC_N >= 0 );
 
 
 C_N = mean(vecC_N);
-%C_N * exp(-rT) est une martingale donc E[exp(-rT)*C_N]= C_N(S_0)
+%C_N * exp(-rT) est une martingale donc 
+% E[exp(-rT)*C_N]= C_N(S_0)
 C_N_0 = exp(-r*T)*C_N;
 
-%% Histogramm
+% Histogramm
 % E_\pi (e^-rT (X_T - K)^+ / F_O) ~ 1/nt \sum {C(T)}
 
 
@@ -96,8 +108,9 @@ C_N_0 = exp(-r*T)*C_N;
 
 duree= toc;
 fprintf('%d trajectoires plotees\n', nt);
-fprintf('Avec S0 de %d, K = %0.5g \n', S0, K);
-fprintf('L''integrale par (t_0 - T) de X_t, le prix estime C(T) = %0.5g \n', C_inf_0);
+fprintf('Avec S0 = %d, K = %0.5g \n', S0, K);
+fprintf('L''integrale par (t_0 - T) de X_t, ');
+    fprintf('le prix estime C(T) = %0.5g \n', C_inf_0);
 fprintf('La moyenne des X_t: C(T) = %0.5g \n', C_N_0);
 fprintf('Fini en %0.5g\n', duree);
 
@@ -125,12 +138,19 @@ histogram( vecC_inf );
 title("Histogramm des C(T) pour X_{infinie}");
 
 %legend("","l'estime pour X_inf","l'estime pour X_N'")
-%plot([C_chapeau C_chapeau], [-0.2*nt/sqrt(sigma*nt) nt/sqrt(sigma*nt)], "-k");
+%plot([C_chapeau C_chapeau], ...
+%     [-0.2*nt/sqrt(sigma*nt) nt/sqrt(sigma*nt)], "-k");
 %plot([t0 T], [0 0], ":k"); % y=zero
 
 
 %% ~~~~~~~~~~~~~~~~~~~~ fonctions ~~~~~~~~~~~~~~~~~~~~~~ %%
 
+
+%% a effacer, aine 
+
+% for i = 1:nt
+%     S(:,i) = brownmo(S0, r, sigma ,t0, T, n);
+% end
 
 function S = brownmo(X0, mu, sigma, t0, T, n) %x0 
   delta = (T-t0)/n;
@@ -143,7 +163,6 @@ function S = brownmo(X0, mu, sigma, t0, T, n) %x0
 end
 
 
-%% a effacer, aine 
 
 function X_t = MoyMob(M, t_m)
     X_t = cumsum(M,1);
@@ -154,13 +173,13 @@ function X_t = MoyMob(M, t_m)
     end
 end
 
-Xn = MoyMob(S, n);
+% Xn = MoyMob(S, n);
 
 % calculer X_T'
-X_pr = zeros(N,nt);
-for i = 1:N %vectoriel?
-    X_pr(i,:) = S(floor(i*n/N),:);
-end
-X_pr = (1/N)*sum(X_pr, 1);
+% X_pr = zeros(N,nt);
+% for i = 1:N %vectoriel?
+%     X_pr(i,:) = S(floor(i*n/N),:);
+% end
+% X_pr = (1/N)*sum(X_pr, 1);
 
 
