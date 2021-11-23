@@ -15,8 +15,9 @@
 
 
 S0 = 40;                % Prix initial du sous jacent
-N = 5;                  % Nombre des sous-intervalles % verifier que N << n => a faire: ecrire un test
-K = 50;                 % Prix d'exercice de l'option
+N = 5;                  % Nombre des sous-intervalles 
+ % verifier que N << n => a faire: ecrire un test
+K = 46;                 % Prix d'exercice de l'option
 
 r = 0.05;               % Taux d'interet sous risque neutre
 sigma = 0.04/sqrt(S0);  % Variance partie fixe
@@ -44,8 +45,6 @@ tic
 %% ~~~~~~~~~~~~~~~~~~~~ Simulation ~~~~~~~~~~~~~~~~~~~~~ %%
 
 
-
-
 dt = (T-t0)/n;
 t = t0:dt:T;
 
@@ -53,33 +52,33 @@ S = zeros(n+1,nt);
 S(1,:) = S0;
 
 for i = 2:(n+1)
-    dW_t = normrnd(zeros(1,nt),1) * sqrt(dt);
+    dW_t = normrnd(zeros(1,nt),sqrt(dt));
     dSi = S(i-1,:).*( r*dt + sigma*sqrt(S(i-1,:)).*dW_t );
     S(i,:) = S(i-1,:) + dSi;
 end
 
 
-
-
 %% ~~~~~~~~~~~~~~~~~~ calcul de X_t ~~~~~~~~~~~~~~~~~~~~ %%
 
-vecX_t = zeros(1,nt);
-for i = 1:nt
-    for j = (1:n)
-        vecX_t(i) = vecX_t(i) + (S(j,i)+S(j+1,i))/2;
-    end
-end
 
-vecX_t = vecX_t/n;
-X_t = mean(vecX_t(:,1));
-vecC_inf = vecX_t-K;
+X_T = 0.5*S0 + sum(S(2:n,:),1) + 0.5*S(n+1,:);
+X_T = X_T/n;
 
-vecC_inf = vecC_inf .* ( vecC_inf >= 0 );
+C_inf = X_T-K;
+C_inf = C_inf .* ( X_T - K >= 0 );
 
-C_inf = mean(vecC_inf);
+C_inf_0 = exp(-r*T)*C_inf;
+
+% ~ Estimateur ~
 %C_inf * exp(-rT) est une martingale donc 
 % E[exp(-rT)*C_inf]= C_inf(S_0)
-C_inf_0 = exp(-r*T)*C_inf;
+
+C_inf_est = mean(C_inf_0);
+C_inf_est_var = var(C_inf_0);
+
+fprintf('L''estimateur du C a t0 = %0.5g\n', ...
+ C_inf_est);
+fprintf('Son écart type = %0.5g\n', sqrt(C_inf_est_var));
 
 %% ~~~~~~~~~~~~~~~~ calcul de X_t_prim ~~~~~~~~~~~~~~~~~ %%
 
