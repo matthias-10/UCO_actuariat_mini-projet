@@ -5,14 +5,11 @@
 % Matthias LANG                   %
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
 
-
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ %
 % ~~~~~ Mathematiques financieres: Mini-projet 1 ~~~~~~~~ %
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ %
 
-
 %% ~~~~~~~~~~~~~~~~~~~~ Parametres ~~~~~~~~~~~~~~~~~~~~~ %%
-
 
 S0 = 40;                % Prix initial du sous jacent
 N = 5;                  % Nombre des sous-intervalles 
@@ -64,13 +61,12 @@ end
 X_T = 0.5*S0 + sum(S(2:n,:),1) + 0.5*S(n+1,:);
 X_T = X_T/n;
 
-C_inf = X_T-K;
-C_inf = C_inf .* ( X_T - K >= 0 );
+C_inf = X_T - K .* ( X_T - K >= 0 );
 
 C_inf_0 = exp(-r*T)*C_inf;
 
 % ~ Estimateur ~
-%C_inf * exp(-rT) est une martingale donc 
+% C_inf * exp(-rT) est une martingale donc 
 % E[exp(-rT)*C_inf]= C_inf(S_0)
 
 C_inf_est = mean(C_inf_0);
@@ -78,28 +74,55 @@ C_inf_est_var = var(C_inf_0);
 
 fprintf('L''estimateur du C a t0 = %0.5g\n', ...
  C_inf_est);
-fprintf('Son écart type = %0.5g\n', sqrt(C_inf_est_var));
-
-%% ~~~~~~~~~~~~~~~~ calcul de X_t_prim ~~~~~~~~~~~~~~~~~ %%
-
-vecX_t_prim = S(1,:);
-for i = 2:(n+1)
-    vecX_t_prim = vecX_t_prim + S(i,:);
-end
-vecX_t_prim = vecX_t_prim/(n+1);
-X_t_prim = mean(vecX_t_prim);
-vecC_N = vecX_t_prim-K;
-
-vecC_N = vecC_N .* ( vecC_N >= 0 );
+fprintf('Son ecart type = %0.5g\n', sqrt(C_inf_est_var));
 
 
-C_N = mean(vecC_N);
-%C_N * exp(-rT) est une martingale donc 
+%% ~~~~~~~~~~~~~~~~ calcul de X_t_prim (Valentin)~~~~~~~~ %%
+
+
+X_t_prim = sum(S,1)/(n+1);
+%X_t_prim = mean(vecX_t_prim);
+C_N = X_t_prim - K .* ( X_t_prim - K >= 0 );
+
+% C_N * exp(-rT) est une martingale donc 
 % E[exp(-rT)*C_N]= C_N(S_0)
 C_N_0 = exp(-r*T)*C_N;
+C_N_est = mean(C_N_0);
+C_N_est_var = var(C_N_0);
 
-% Histogramm
-% E_\pi (e^-rT (X_T - K)^+ / F_O) ~ 1/nt \sum {C(T)}
+fprintf('L''estimateur du C_N a t0 = %0.5g\n', ...
+ C_N_est);
+fprintf('Son ecart type = %0.5g\n', sqrt(C_N_est_var));
+
+
+%% ~~~~~~~~~~~~~~~~ calcul de X_t_prim (Matthias)~~~~~~~~ %%
+
+%1/N * sum_1^N S_{kT/N}
+% => kT =  
+
+index = fliplr(1:n);
+index = index(1:(n/N):end); % supprimer l'erreur ici
+index = fliplr(index);
+
+X_t_matthias = sum(S(index,:),1)/N;
+
+%function X_t = MoyMob(M, t_m)
+%    X_t = cumsum(M,1);
+%    t_m2= t_m+1;
+%    X_t = X_t(1:t_m2,:);
+%    for i = 1:t_m2
+%        X_t(i,:) = X_t(i,:)/i; %vectoriel?
+%    end
+%end
+
+% Xn = MoyMob(S, n);
+
+% calculer X_T'
+% X_pr = zeros(N,nt);
+% for i = 1:N %vectoriel?
+%     X_pr(i,:) = S(floor(i*n/N),:);
+% end
+% X_pr = (1/N)*sum(X_pr, 1);
 
 
 %% ~~~~~~~~~~~~~~~~~~~~~~~ Plot ~~~~~~~~~~~~~~~~~~~~~~~~ %%
@@ -133,6 +156,8 @@ hold off
 
 nexttile
 
+% Histogramm des estimateurs
+% E_\pi (e^-rT (X_T - K)^+ / F_O) ~ 1/nt \sum {C(T)}
 histogram( vecC_inf );
 title("Histogramm des C(T) pour X_{infinie}");
 
@@ -142,43 +167,8 @@ title("Histogramm des C(T) pour X_{infinie}");
 %plot([t0 T], [0 0], ":k"); % y=zero
 
 
-%% ~~~~~~~~~~~~~~~~~~~~ fonctions ~~~~~~~~~~~~~~~~~~~~~~ %%
-
-
-%% a effacer, aine 
-
-% for i = 1:nt
-%     S(:,i) = brownmo(S0, r, sigma ,t0, T, n);
-% end
-
-function S = brownmo(X0, mu, sigma, t0, T, n) %x0 
-  delta = (T-t0)/n;
-  W = zeros(1,n+1);
-  tseq = t0:((T-t0)/n):T;
-  for i = 2:(n+1)
-    W(i) = W(i-1)+normrnd(0,1)*sqrt(delta);
-  end
-  S = X0 * exp( (mu-(sigma^2)/2) * (tseq-t0) + sigma*W );
-end
 
 
 
-function X_t = MoyMob(M, t_m)
-    X_t = cumsum(M,1);
-    t_m2= t_m+1;
-    X_t = X_t(1:t_m2,:);
-    for i = 1:t_m2
-        X_t(i,:) = X_t(i,:)/i; %vectoriel?
-    end
-end
-
-% Xn = MoyMob(S, n);
-
-% calculer X_T'
-% X_pr = zeros(N,nt);
-% for i = 1:N %vectoriel?
-%     X_pr(i,:) = S(floor(i*n/N),:);
-% end
-% X_pr = (1/N)*sum(X_pr, 1);
 
 

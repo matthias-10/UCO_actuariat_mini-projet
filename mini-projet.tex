@@ -123,7 +123,7 @@ d \langle S_t,~~ S_t\rangle
 \text{Formule d'Ito: } dln(S_t) = \frac{dS_t}{S_t} + \frac{1}{2} \frac{-1}{S_t^2}d \langle S_t, ~S_t \rangle \\
 \text{Avec les équations 2 et 3:} \\
 dln(S_t) = rdt + \sigma \sqrt{S_t} dW_t - \frac{1}{2}S_t \sigma^2 dt ~= \\
-= (r - \frac{1}{2}S_t\sigma^2)dt + \sigma\sqrt{S_t}dW_t)
+= (r - \frac{1}{2}S_t\sigma^2)dt + \sigma\sqrt{S_t}dW_t
 \end{multlined}
 \end{equation}
 
@@ -136,7 +136,7 @@ ln( \frac{S_t}{S_0} ) = ln(S_t)-ln(S_0) = \int_0^t dln(S_u) = \\
 \end{multlined}
 \end{equation}
 
-Donc on ne peut pas facilement dériver une formule pour le prix qui dépend que des variables fixées, mais on peut le simuler pas à pas avec (1):
+Donc on ne peut pas facilement dériver une formule pour le prix comme ça, qui dépend que des variables fixées, mais on peut le simuler pas à pas avec (1):
 
 \begin{equation} \label{6}
 \begin{multlined}
