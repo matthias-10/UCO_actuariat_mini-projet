@@ -1,0 +1,102 @@
+\documentclass[a4paper,12pt]{scrartcl}
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[utf8]{inputenc}
+\usepackage[francais]{babel}
+\usepackage{graphicx}
+\usepackage{microtype} 
+\usepackage[onehalfspacing]{setspace}
+\usepackage[top=2.5cm, bottom=2.5cm, left=3cm, right=3.5cm]{geometry}
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{listings}
+\usepackage{listingsutf8}
+\usepackage{dsfont}
+\usepackage{appendix}
+\usepackage{mathtools, amssymb}
+\usepackage[usenames,dvipsnames]{color}
+
+
+\definecolor{MyDarkGreen}{rgb}{0.0,0.4,0.0}
+\lstloadlanguages{Matlab}
+\lstset{language=Matlab,                        % Use MATLAB
+        frame=single,                           % Single frame around code
+        basicstyle=\small\ttfamily,             % Use small true type font
+        keywordstyle=[1]\color{Blue}\bfseries,  % MATLAB functions bold and blue
+        keywordstyle=[2]\color{Purple},         % MATLAB function arguments purple
+        keywordstyle=[3]\color{Blue}\underbar,  % User functions underlined and blue
+        identifierstyle=,                       % Nothing special about identifiers
+                                                % Comments small dark green courier
+        commentstyle=\usefont{T1}{pcr}{m}{sl}\color{MyDarkGreen}\small,
+        stringstyle=\color{Purple},             % Strings are purple
+        showstringspaces=false,                 % Don't put marks in string spaces
+        tabsize=5,                              % 5 spaces per tab
+        %
+        %%% Put standard MATLAB functions not included in the default
+        %%% language here
+        morekeywords={xlim,ylim,var,alpha,factorial,poissrnd,normpdf,normcdf},
+        %
+        %%% Put MATLAB function parameters here
+        morekeywords=[2]{on, off, interp},
+        %
+        %%% Put user defined functions here
+        morekeywords=[3]{brownmo},
+        %
+        morecomment=[l][\color{Blue}]{...},     % Line continuation (...) like blue comment
+        numbers=left,                           % Line numbers on left
+        firstnumber=1,                          % Line numbers start with line 1
+        numberstyle=\tiny\color{Blue},          % Line numbers are blue
+        stepnumber=5,                           % Line numbers go in steps of 5
+        literate=%                              % accents and Umlaute
+                 {Ö}{{\"O}}1
+                 {Ä}{{\"A}}1
+                 {Ü}{{\"U}}1
+                 {ß}{{\ss}}1
+                 {ü}{{\"u}}1
+                 {ä}{{\"a}}1
+                 {ö}{{\"o}}1
+                 {\$}{{\dollar}}1
+        }
+% Includes a MATLAB script.
+% The first parameter is the label, which also is the name of the script
+%   without the .m.
+% The second parameter is the optional caption.
+
+\title{Mini projet 1: Calcul du prix d'une option asiatique}
+\author{Valentin DE CRESPIN DE BILLY \\ Matthias LANG}
+\date{30.11.2021}
+
+\linespread{1.5} 
+
+
+\begin{document}
+
+\maketitle
+\begin{center}
+
+  \thispagestyle{empty}
+
+  N. d'étudiant: XXXXXXX et 313411\\
+  Université Catholique de l'Ouest\\
+  Mathématiques financières\\
+\end{center}
+
+\newpage
+
+
+
+
+
+
+%%%%%%%% A N N E X E %%%%%%%%%%%%%%%%%%
+\appendix
+\appendixpage
+\addappheadtotoc
+
+\section{Code Matlab}
+\lstinputlisting{mini_projet.m}
+
+
+\end{document}
