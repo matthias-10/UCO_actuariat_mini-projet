@@ -1,0 +1,13 @@
+*.log 
+*.bcf 
+*.fdb* 
+*.fls 
+*.aux 
+*.toc 
+*.bbl 
+*.blg 
+*.acr 
+*.run.xml
+*.ipynb*
+Latex_Vorlagen
+matthias_ignore
