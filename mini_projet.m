@@ -12,17 +12,17 @@
 %% ~~~~~~~~~~~~~~~~~~~~ Parametres ~~~~~~~~~~~~~~~~~~~~~ %%
 
 S0 = 40;                % Prix initial du sous jacent
-N = 5;                  % Nombre des sous-intervalles 
- % verifier que N << n => a faire: ecrire un test
 K = 46;                 % Prix d'exercice de l'option
 
 r = 0.05;               % Taux d'interet sous risque neutre
 sigma = 0.04/sqrt(S0);  % Variance partie fixe
 
+N = 5;                  % Nombre des sous-intervalles 
+ % verifier que N << n => a faire: ecrire un test
 t0 = 0;                 % Debut de la periode
-n = 2^4;               % Nombre de intervalles
+n = 2^9;                % Nombre de intervalles
 T = 3;                  % Fin de la periode
-nt = 5;               % Nombre de trajectoires
+nt = 1000;              % Nombre de trajectoires
 
 
 starttime = datetime('now');
@@ -47,6 +47,7 @@ t = t0:dt:T;
 S = zeros(n+1,nt);
 S(1,:) = S0;
 
+% Simulation pas a pas
 for i = 2:(n+1)
     dW_t = normrnd(zeros(1,nt),sqrt(dt));
     dSi = S(i-1,:).*( r*dt + sigma*sqrt(S(i-1,:)).*dW_t );
@@ -54,8 +55,7 @@ for i = 2:(n+1)
 end
 
 
-% Calcul en boucle au lieu de matrice:
-C     = zeros(1,nt);
+C_inf = zeros(1,nt);
 C_val = zeros(1,nt);
 C_mat = zeros(1,nt);
 for j = 1:nt
@@ -72,7 +72,7 @@ for j = 1:nt
     % C_inf * exp(-rT) est une martingale donc 
     % E[exp(-rT)*C_inf]= C_inf(S_0)
     
-    C(j)=C_inf_0;
+    C_inf(j)=C_inf_0;
 
 
     %% ~~~~~~~~~ calcul avec X_t_prim (Valentin)~~~~~~~~ %%
@@ -94,8 +94,7 @@ for j = 1:nt
     % => kT n'est pas un numero entier, il faut arrondir
 
     index = fliplr(1:n);
-    index = index(1:(n/N):end); % supprimer l'erreur ici (arrondir)
-    index = fliplr(index);
+    index = index(1:(n/N):end); % supprimer Warning a cause de arrondir !?
     X_t_matthias = sum(S_vec(index,:),1)/N;
 
     C_N = X_t_matthias - K .* ( X_t_matthias - K >= 0 );
@@ -109,9 +108,9 @@ for j = 1:nt
 end
 
 %%%%%%%%
-% C
-C_inf_est = mean(C);
-C_inf_est_var = var(C);
+% C_inf
+C_inf_est = mean(C_inf);
+C_inf_est_var = var(C_inf);
 
 fprintf('L''estimateur du C_inf a t0 = %0.5g\n', ...
  C_inf_est);
@@ -145,16 +144,18 @@ fprintf('La moyenne des X_t: C(T) = %0.5g \n', C_N_0);
 fprintf('Fini en %0.5g\n', duree);
 
 
-%% ~~~~~~~~~~~~~~~~~~~~~~~ Plot ~~~~~~~~~~~~~~~~~~~~~~~~ %%
+%% ~~~~~~~~~~~~~~~~~~~~~ graphes ~~~~~~~~~~~~~~~~~~~~~~~ %%
 
-tiledlayout(2,1)
-nexttile
-hold on 
+% 1:   graphe de S; 
+% 2-3: histogrammes de C_inf et C_N; 
+% 4:   boxplot des estimateurs
 
-x_ax = t; % x-axe
+fprintf('\n 1: graphe de S \n')
+input('Tapez [Enter] pour afficher le graphe\n')
+
 axis([0 T 0.8*min(min(S)) 1.5*max(max(S))]) %x-axe limits
 
-plot(x_ax, S)
+plot(t, S)
 
 % pour comparison, si j'epargne pour le taux r:
 %plot([t0 T], [S0 S0*(1+r)^(T-t0)], "--k"); % obligation
@@ -162,23 +163,38 @@ fplot(obligation, [t0 T], "-k");
 
 legend("les prix S_t des actions", "sans risque");
 
-hold off
 
-nexttile
+fprintf('\n 2: histogramme de C_inf \n')
+input('Tapez [Enter] pour afficher le graphe\n')
 
-% Histogramm des estimateurs
 % E_\pi (e^-rT (X_T - K)^+ / F_O) ~ 1/nt \sum {C(T)}
-histogram( vecC_inf );
+histogram( C_inf );
 title("Histogramm des C(T) pour X_{infinie}");
 
-%legend("","l'estime pour X_inf","l'estime pour X_N'")
-%plot([C_chapeau C_chapeau], ...
-%     [-0.2*nt/sqrt(sigma*nt) nt/sqrt(sigma*nt)], "-k");
-%plot([t0 T], [0 0], ":k"); % y=zero
+
+fprintf('\n 3: histogramme de C_N \n')
+input('Tapez [Enter] pour afficher le graphe\n')
+
+histogram( C_mat );
+title("Histogramm des C(T) pour X_{N}");
 
 
+fprintf('\n 4: boxplot des estimateurs \n')
+input('Tapez [Enter] pour afficher le graphe\n')
 
+tiledlayout(1,2)
+nexttile
+hold on 
 
+boxplot( C_inf );
+title('boxplot de C_{infinie} a T')
+ylabel(C_T, valeurs actualisees)
 
+hold off
+nexttile
+hold on
 
+boxplot ( C_mat );
+title('boxplot de C_{N} a T')
 
+hold off
