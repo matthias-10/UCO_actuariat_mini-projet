@@ -35,12 +35,11 @@ obligation(x) = S0*(1+r)^(x-t0);
 bonds_T = obligation(T);
 fprintf('%0.5g -> Prix d''une obligation a T\n', bonds_T)
 fprintf('%0.5g -> Prix d''exercice de l''option \n', K);
-fprintf(' . . . ')
+fprintf(' . . . \n\n')
 tic
 
 
 %% ~~~~~~~~~~~~~~~~~~~~ Simulation ~~~~~~~~~~~~~~~~~~~~~ %%
-
 
 dt = (T-t0)/n;
 t = t0:dt:T;
@@ -55,87 +54,98 @@ for i = 2:(n+1)
 end
 
 
-%% ~~~~~~~~~~~~~~~~~~ calcul de X_t ~~~~~~~~~~~~~~~~~~~~ %%
+% Calcul en boucle au lieu de matrice:
+C     = zeros(1,nt);
+C_val = zeros(1,nt);
+C_mat = zeros(1,nt);
+for j = 1:nt
+    S_vec = S(:,j);
+    %% ~~~~~~~~~~~~~~~ calcul avec X_t ~~~~~~~~~~~~~~~~~ %%
+
+    X_T = 0.5*S0 + sum(S_vec(2:n,:),1) + 0.5*S_vec(n+1,:);
+    X_T = X_T/n;
+
+    C_inf = X_T - K .* ( X_T - K >= 0 );
+    C_inf_0 = exp(-r*T)*C_inf;
+
+    % ~ Estimateur ~
+    % C_inf * exp(-rT) est une martingale donc 
+    % E[exp(-rT)*C_inf]= C_inf(S_0)
+    
+    C(j)=C_inf_0;
 
 
-X_T = 0.5*S0 + sum(S(2:n,:),1) + 0.5*S(n+1,:);
-X_T = X_T/n;
+    %% ~~~~~~~~~ calcul avec X_t_prim (Valentin)~~~~~~~~ %%
 
-C_inf = X_T - K .* ( X_T - K >= 0 );
+    X_t_prim = sum(S_vec,1)/(n+1);
+    %X_t_prim = mean(vecX_t_prim);
+    C_N = X_t_prim - K .* ( X_t_prim - K >= 0 );
 
-C_inf_0 = exp(-r*T)*C_inf;
+    % C_N * exp(-rT) est une martingale donc 
+    % E[exp(-rT)*C_N]= C_N(S_0)
+    C_N_0 = exp(-r*T)*C_N;
 
-% ~ Estimateur ~
-% C_inf * exp(-rT) est une martingale donc 
-% E[exp(-rT)*C_inf]= C_inf(S_0)
+    C_val(j)=C_N_0;
 
-C_inf_est = mean(C_inf_0);
-C_inf_est_var = var(C_inf_0);
 
-fprintf('L''estimateur du C a t0 = %0.5g\n', ...
+    %% ~~~~~~~~~~ calcul avec X_t_prim (Matthias)~~~~~~~ %%
+
+    %1/N * sum_1^N S_{kT/N}
+    % => kT n'est pas un numero entier, il faut arrondir
+
+    index = fliplr(1:n);
+    index = index(1:(n/N):end); % supprimer l'erreur ici (arrondir)
+    index = fliplr(index);
+    X_t_matthias = sum(S_vec(index,:),1)/N;
+
+    C_N = X_t_matthias - K .* ( X_t_matthias - K >= 0 );
+
+    % C_N * exp(-rT) est une martingale donc 
+    % E[exp(-rT)*C_N]= C_N(S_0)
+    C_N_0 = exp(-r*T)*C_N;
+
+    C_mat(j)=C_N_0;
+
+end
+
+%%%%%%%%
+% C
+C_inf_est = mean(C);
+C_inf_est_var = var(C);
+
+fprintf('L''estimateur du C_inf a t0 = %0.5g\n', ...
  C_inf_est);
 fprintf('Son ecart type = %0.5g\n', sqrt(C_inf_est_var));
 
-
-%% ~~~~~~~~~~~~~~~~ calcul de X_t_prim (Valentin)~~~~~~~~ %%
-
-
-X_t_prim = sum(S,1)/(n+1);
-%X_t_prim = mean(vecX_t_prim);
-C_N = X_t_prim - K .* ( X_t_prim - K >= 0 );
-
-% C_N * exp(-rT) est une martingale donc 
-% E[exp(-rT)*C_N]= C_N(S_0)
-C_N_0 = exp(-r*T)*C_N;
-C_N_est = mean(C_N_0);
-C_N_est_var = var(C_N_0);
+fprintf('\n methodes differentes pour C_N, \n premier Valentin, puis Matthias \n')
+% Valentin C_inf
+C_N_est_val = mean(C_val);
+C_N_est_var_val = var(C_val);
 
 fprintf('L''estimateur du C_N a t0 = %0.5g\n', ...
- C_N_est);
-fprintf('Son ecart type = %0.5g\n', sqrt(C_N_est_var));
+ C_N_est_val);
+fprintf('Son ecart type = %0.5g\n', sqrt(C_N_est_var_val));
 
+% Matthias C_inf
+C_N_est_mat = mean(C_mat);
+C_N_est_var_mat = var(C_mat);
 
-%% ~~~~~~~~~~~~~~~~ calcul de X_t_prim (Matthias)~~~~~~~~ %%
-
-%1/N * sum_1^N S_{kT/N}
-% => kT =  
-
-index = fliplr(1:n);
-index = index(1:(n/N):end); % supprimer l'erreur ici
-index = fliplr(index);
-
-X_t_matthias = sum(S(index,:),1)/N;
-
-%function X_t = MoyMob(M, t_m)
-%    X_t = cumsum(M,1);
-%    t_m2= t_m+1;
-%    X_t = X_t(1:t_m2,:);
-%    for i = 1:t_m2
-%        X_t(i,:) = X_t(i,:)/i; %vectoriel?
-%    end
-%end
-
-% Xn = MoyMob(S, n);
-
-% calculer X_T'
-% X_pr = zeros(N,nt);
-% for i = 1:N %vectoriel?
-%     X_pr(i,:) = S(floor(i*n/N),:);
-% end
-% X_pr = (1/N)*sum(X_pr, 1);
-
-
-%% ~~~~~~~~~~~~~~~~~~~~~~~ Plot ~~~~~~~~~~~~~~~~~~~~~~~~ %%
+fprintf('L''estimateur du C_N a t0 = %0.5g\n', ...
+ C_N_est_mat);
+fprintf('Son ecart type = %0.5g\n', sqrt(C_N_est_var_mat));
 
 
 duree= toc;
-fprintf('%d trajectoires plotees\n', nt);
+fprintf('\n')
+fprintf('%d trajectoires simules\n', nt);
 fprintf('Avec S0 = %d, K = %0.5g \n', S0, K);
 fprintf('L''integrale par (t_0 - T) de X_t, ');
     fprintf('le prix estime C(T) = %0.5g \n', C_inf_0);
 fprintf('La moyenne des X_t: C(T) = %0.5g \n', C_N_0);
 fprintf('Fini en %0.5g\n', duree);
 
+
+%% ~~~~~~~~~~~~~~~~~~~~~~~ Plot ~~~~~~~~~~~~~~~~~~~~~~~~ %%
 
 tiledlayout(2,1)
 nexttile
