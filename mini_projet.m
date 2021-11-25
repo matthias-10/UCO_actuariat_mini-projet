@@ -12,28 +12,31 @@
 %% ~~~~~~~~~~~~~~~~~~~~ Parametres ~~~~~~~~~~~~~~~~~~~~~ %%
 
 S0 = 40;                % Prix initial du sous jacent
-K = 46;                 % Prix d'exercice de l'option
+K = 0;                 % Prix d'exercice de l'option
 
 r = 0.05;               % Taux d'interet sous risque neutre
-sigma = 0.04/sqrt(S0);  % Variance partie fixe
+sigma = 0.01/sqrt(S0);  % Variance partie fixe
 
 N = 5;                  % Nombre des sous-intervalles 
  % verifier que N << n => a faire: ecrire un test
 t0 = 0;                 % Debut de la periode
 n = 2^9;                % Nombre de intervalles
-T = 3;                  % Fin de la periode
+T = 1;                  % Fin de la periode %% dès T=70 S a elements imaginaires?
 nt = 1000;              % Nombre de trajectoires
 
 
 starttime = datetime('now');
+fprintf('\n ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ \n');
 fprintf('La programme a demarre a %s \n', starttime);
 fprintf('%d -> Nombre de trajectoires \n', nt);
 fprintf('%d -> Prix initial du sous jacent \n', S0)
-syms func(x)
-obligation(x) = S0*(1+r)^(x-t0);
+
+%1% syms func(x) %1% requires Symbolic Math Toolbox.
+%1% obligation(x) = S0*(1+r)^(x-t0);
+
 %K = int(obligation,t0,T)/(T-t0);
-bonds_T = obligation(T);
-fprintf('%0.5g -> Prix d''une obligation a T\n', bonds_T)
+%1% bonds_T = obligation(T);
+%1% fprintf('%0.5g -> Prix d''une obligation a T\n', bonds_T)
 fprintf('%0.5g -> Prix d''exercice de l''option \n', K);
 fprintf(' . . . \n\n')
 tic
@@ -55,18 +58,25 @@ for i = 2:(n+1)
 end
 
 
+%% ~~~~~~~~~~~~~~~ prix de l'option C ~~~~~~~~~~~~~~~~~~ %%
+%size(S)
+% >ans =      513        1000
 C_inf = zeros(1,nt);
 C_val = zeros(1,nt);
 C_mat = zeros(1,nt);
 for j = 1:nt
     S_vec = S(:,j);
     %% ~~~~~~~~~~~~~~~ calcul avec X_t ~~~~~~~~~~~~~~~~~ %%
+    
+    %%%%
+    % debogage: C_inf = 0, sauf que la premiere et derniere valeur de C_inf
 
+    % integral: l'aire de t0 a T sous S
     X_T = 0.5*S0 + sum(S_vec(2:n,:),1) + 0.5*S_vec(n+1,:);
-    X_T = X_T/n;
+    X_T = X_T/n; %ou (n+1)?
 
-    C_inf = X_T - K .* ( X_T - K >= 0 );
-    C_inf_0 = exp(-r*T)*C_inf;
+    C_inf_j = X_T - K .* ( X_T - K >= 0 );
+    C_inf_0 = exp(-r*T)*C_inf_j;
 
     % ~ Estimateur ~
     % C_inf * exp(-rT) est une martingale donc 
@@ -79,11 +89,11 @@ for j = 1:nt
 
     X_t_prim = sum(S_vec,1)/(n+1);
     %X_t_prim = mean(vecX_t_prim);
-    C_N = X_t_prim - K .* ( X_t_prim - K >= 0 );
+    C_N_j = X_t_prim - K .* ( X_t_prim - K >= 0 );
 
     % C_N * exp(-rT) est une martingale donc 
     % E[exp(-rT)*C_N]= C_N(S_0)
-    C_N_0 = exp(-r*T)*C_N;
+    C_N_0 = exp(-r*T)*C_N_j;
 
     C_val(j)=C_N_0;
 
@@ -94,20 +104,24 @@ for j = 1:nt
     % => kT n'est pas un numero entier, il faut arrondir
 
     index = fliplr(1:n);
-    index = index(1:(n/N):end); % supprimer Warning a cause de arrondir !?
+    warn_id = 'MATLAB:colon:nonIntegerIndex';
+    warning('off', warn_id);
+    % ^supprime Warning a cause de arrondir:
+    index = index(1:(n/N):end); 
     X_t_matthias = sum(S_vec(index,:),1)/N;
 
-    C_N = X_t_matthias - K .* ( X_t_matthias - K >= 0 );
+    C_N_j = X_t_matthias - K .* ( X_t_matthias - K >= 0 );
 
     % C_N * exp(-rT) est une martingale donc 
     % E[exp(-rT)*C_N]= C_N(S_0)
-    C_N_0 = exp(-r*T)*C_N;
+    C_N_0 = exp(-r*T)*C_N_j;
 
     C_mat(j)=C_N_0;
 
 end
 
-%%%%%%%%
+%% ~~~~~~~~~~~~ affichage des estimateurs ~~~~~~~~~~~~~~ %%
+
 % C_inf
 C_inf_est = mean(C_inf);
 C_inf_est_var = var(C_inf);
@@ -148,20 +162,20 @@ fprintf('Fini en %0.5g\n', duree);
 
 % 1:   graphe de S; 
 % 2-3: histogrammes de C_inf et C_N; 
-% 4:   boxplot des estimateurs
+% 4-5:   boxplot des estimateurs
 
 fprintf('\n 1: graphe de S \n')
 input('Tapez [Enter] pour afficher le graphe\n')
 
-axis([0 T 0.8*min(min(S)) 1.5*max(max(S))]) %x-axe limits
+%axis([0 T 0.8*min(min(S)) 1.5*max(max(S))]) %x-axe limits
 
 plot(t, S)
 
 % pour comparison, si j'epargne pour le taux r:
 %plot([t0 T], [S0 S0*(1+r)^(T-t0)], "--k"); % obligation
-fplot(obligation, [t0 T], "-k"); 
+%1% fplot(obligation, [t0 T], "-k"); 
 
-legend("les prix S_t des actions", "sans risque");
+legend("les prix S_t des actions", "sans risque","Location","northwest");
 
 
 fprintf('\n 2: histogramme de C_inf \n')
@@ -182,19 +196,19 @@ title("Histogramm des C(T) pour X_{N}");
 fprintf('\n 4: boxplot des estimateurs \n')
 input('Tapez [Enter] pour afficher le graphe\n')
 
-tiledlayout(1,2)
-nexttile
-hold on 
+%tiledlayout(1,2)
+%nexttile
+%hold on 
 
 boxplot( C_inf );
 title('boxplot de C_{infinie} a T')
-ylabel(C_T, valeurs actualisees)
+ylabel('C_T, valeurs actualisees')
 
-hold off
-nexttile
-hold on
+%hold off
+%nexttile
+%hold on
 
 boxplot ( C_mat );
 title('boxplot de C_{N} a T')
 
-hold off
+%hold off
