@@ -173,9 +173,6 @@ S_2 \approx S_1 + dS_1 \\
     xrightmargin=3.4pt,%make the frame fits in the text area.
     ]
 
-
-Rem Attribute VBA_ModuleType=VBAModule
-Option VBASupport 1
 Sub Macro1()
 
 Dim T, n, nt, Nd As Integer
@@ -196,56 +193,55 @@ t0 = Range("A9").Value
 Dim dt As Double
 dt = ((T - t0) / n)
 
+' afficher t
 Dim temps() As Double
-ReDim temps(n + 1)
+ReDim temps(n + 2)
 temps(0) = t0
-For j = 1 To n + 1
+For j = 1 To n + 2
     temps(j) = temps(j - 1) + dt
 Next
 
-
-Range("I2:I" & UBound(temps) + 1) = WorksheetFunction.Transpose(temps)
+Range("I3:I" & UBound(temps) + 1) = WorksheetFunction.Transpose(temps)
 
 Dim S() As Double
 ReDim S(1 To n + 1, 1 To nt)
-Dim W As Double
+Dim dW As Double
+Dim dS As Double
 Dim x As Double
 
-For j = 0 To nt - 1
-For i = 0 To n
+'effacer S() aine
 
-  If i = 0 Then
-    W = 0
-    Else
-    W = W + Sqr(-2 * Log(Rnd())) * Cos(6.283185307 * Rnd()) * Sqr(dt)
-  End If
-  
-  x = S0 * Exp((r - (sigma ^ 2) / 2) * (temps(i) - t0) + sigma * W)
-  Cells(2 + i, 10 + j).Value = x ' copier s dans la worksheet
-  'S(i, j) = x
-
+'simuler S pas a pas
+For j = 1 To nt
+    x = S0
+    i = 1
+    Cells(2 + i, 9 + j).Value = x 'S(i, j) ' copier s dans la worksheet
+    Cells(1 + i, 9 + j).Value = "series " & j
+    For i = 1 To n + 1
+        If i > 1 Then
+            dW = Sqr(-2 * Log(Rnd())) * Cos(6.283185307 * Rnd()) * Sqr(dt)
+            'dS = S(i - 1, j) * (r * dt + sigma * Sqr(S(i - 1, j)) * dW)
+            'aine = Cells(1 + i, 10 + j).Value
+            dS = x * (r * dt + sigma * Sqr(x) * dW)
+            'S(i, j) = S(i - 1, j) + dS
+            x = x + dS 'S(i - 1, j) + dS
+            Cells(2 + i, 9 + j).Value = x  'S(i, j) ' copier s dans la worksheet
+        End If
+        S(i, j) = x
+    Next
 Next
-Next
+
+'Range("J21:O100") = S()
 
 
+' insert Chart
+'Dim Cht As Chart
+'Set Cht = Charts.Add
+'With Cht
+'    .SetSourceData Source:=Sheets("Sheet1").Range("A1:B6")
+'    .ChartType = xl3DArea
+'End With
 
-'Cells(i, 3).Value =
-
-
-'S = zeros(length(t),nt);
-'for i = 1:nt
-'    S(:,i) = brownmo(S0, r, sigma ,t0, T, n); %brownmo est definie en bas
-'End
-
-'function S = brownmo(X0, mu, sigma, t0, T, n) %x0
-
-'  delta = (T-t0)/n;
-'  W = zeros(1,n+1);
-'  tseq = t0:((T-t0)/n):T;
-'  for i = 2:(n+1)
-'    W(i) = W(i-1)+normrnd(0,1)*sqrt(delta);
-'  End
-'  S = X0 * exp( (mu-(sigma^2)/2) * (tseq-t0) + sigma*W );
 
 MsgBox "Simule pour " & nt & " trajectoires."
 
@@ -254,6 +250,7 @@ MsgBox "Simule pour " & nt & " trajectoires."
 'Range("A13").Value = T
 
 End Sub
+
 \end{lstlisting}
 
 
