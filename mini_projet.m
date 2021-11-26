@@ -17,8 +17,8 @@ K = 0;                 % Prix d'exercice de l'option
 r = 0.05;               % Taux d'interet sous risque neutre
 sigma = 0.01/sqrt(S0);  % Variance partie fixe
 
-N = 5;                  % Nombre des sous-intervalles 
- % verifier que N << n => a faire: ecrire un test
+Nd = 5;                  % Nombre des sous-intervalles 
+ % verifier que Nd << n => a faire: ecrire un test
 t0 = 0;                 % Debut de la periode
 n = 2^9;                % Nombre de intervalles
 T = 1;                  % Fin de la periode %% dès T=70 S a elements imaginaires?
@@ -107,8 +107,8 @@ for j = 1:nt
     warn_id = 'MATLAB:colon:nonIntegerIndex';
     warning('off', warn_id);
     % ^supprime Warning a cause de arrondir:
-    index = index(1:(n/N):end); 
-    X_t_matthias = sum(S_vec(index,:),1)/N;
+    index = index(1:(n/Nd):end); 
+    X_t_matthias = sum(S_vec(index,:),1)/Nd;
 
     C_N_j = X_t_matthias - K .* ( X_t_matthias - K >= 0 );
 
