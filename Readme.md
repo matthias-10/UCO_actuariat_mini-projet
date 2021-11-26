@@ -1,6 +1,6 @@
 ## à faire
 
-* vérifier la simulation de S pas à pas
+* vérifier la simulation de S pas à pas (comparer la variance simulée avec la calculée)
 * vérifer le code Matlab -> quel X_N ?
 * sauvegarder les images de matlab
 * traduire en VBA
