@@ -21,7 +21,7 @@ Nd = 5;                  % Nombre des sous-intervalles
  % verifier que Nd << n => a faire: ecrire un test
 t0 = 0;                 % Debut de la periode
 n = 2^9;                % Nombre de intervalles
-T = 1;                  % Fin de la periode %% dès T=70 S a elements imaginaires?
+T = 1;                  % Fin de la periode
 nt = 1000;              % Nombre de trajectoires
 
 

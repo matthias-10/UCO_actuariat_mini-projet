@@ -6,6 +6,7 @@
 *.toc 
 *.bbl 
 *.blg 
+*.out
 *.acr 
 *.run.xml
 *.ipynb*

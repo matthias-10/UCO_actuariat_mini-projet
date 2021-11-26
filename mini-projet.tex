@@ -15,6 +15,7 @@
 \usepackage{listingsutf8}
 \usepackage{dsfont}
 \usepackage{appendix}
+\usepackage{hyperref}
 \usepackage{mathtools, amssymb}
 \usepackage[usenames,dvipsnames]{color}
 
@@ -132,7 +133,7 @@ ln( \frac{S_t}{S_0} ) = ln(S_t)-ln(S_0) = \int_0^t dln(S_u) = \\
 \end{multlined}
 \end{equation}
 
-Donc on ne peut pas facilement dériver une formule pour le prix comme ça, qui dépend que des variables fixées, mais on peut le simuler pas à pas avec (1):
+Donc on ne peut pas facilement dériver une formule pour le prix comme ça, qui dépend que des variables fixées, mais on peut le simuler pas à pas en utilisant (1):
 
 \begin{equation} \label{6}
 \begin{multlined}
@@ -147,14 +148,43 @@ S_2 \approx S_1 + dS_1 \\
 
 
 
+\subsection{Réduction de la variance du éstimateur}
 
+Les éstimateurs ont une variance telle que:
+$ \hat{Var}(C) = \hat{\sigma_i^2} / n_t$, oú $n_t$ est le nombre des observations et $\hat{\sigma_i^2}$ est la variance estimée de la population, qui est égal à la variance de l'échantillon.
 
+Supposons que nous ne connaissions ni les paramètres ni la règle à partir desquels les prix sont établis. 
+Nous ne pouvons donc pas augmenter le nombre d'observations pour améliorer l'estimateur.
+Quelle autre possibilité existe-t-il pour réduire sa variance ?
+
+Avec les techniques de bootstrap on pourrait répliquer les données. 
+Mais on risque de introduir un biais.
+Si on utilise une variable de contrôle on n'invente pas des nouvelles données, ni risque-t-on de changer l'ésperance.
 
 
 %%%%%%%% A N N E X E %%%%%%%%%%%%%%%%%%
+\clearpage
+
 \appendix
 \appendixpage
 \addappheadtotoc
+
+\begin{center}
+Toutes les fiches se trouvent dans le repository en ligne: 
+
+ \url{https://github.com/matthias-10/UCO_actuariat_mini-projet}
+\end{center}
+
+\section{Graphiques}
+
+\begin{figure}[h!]
+  \begin{center}
+    \includegraphics[width=14cm]{"graphiques/hist_feat_value.jpg"}
+    \caption{Histogramme d'un èstimateur}
+    \label{hist_C_inf}
+  \end{center}
+\end{figure}
+
 
 \section{Code Matlab}
 \lstinputlisting{mini_projet.m}
