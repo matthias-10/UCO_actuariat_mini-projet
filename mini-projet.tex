@@ -161,6 +161,14 @@ Avec les techniques de bootstrap on pourrait répliquer les données.
 Mais on risque de introduir un biais.
 Si on utilise une variable de contrôle on n'invente pas des nouvelles données, ni risque-t-on de changer l'ésperance.
 
+% variable antith
+
+\section{Réalisation numerique}
+
+Les algorithmes sont réalisées avec deux langues de programmation: Matlab et Visual Basic for Applications.
+Plusieurs graphiques sont y générés, vous les trouverez dans l'annexe \ref{graphiques}.
+En plus, avec le logiciel Excel nous avons crée un dashboard, voir une capture d'figure ref{X}. 
+Vous trouverez les scriptes et les images dans l'annexe, et avec la fiche de dashboard également dans le \href{https://github.com/matthias-10/UCO_actuariat_mini-projet}{repository}.
 
 %%%%%%%% A N N E X E %%%%%%%%%%%%%%%%%%
 \clearpage
@@ -175,7 +183,7 @@ Toutes les fiches se trouvent dans le repository en ligne:
  \url{https://github.com/matthias-10/UCO_actuariat_mini-projet}
 \end{center}
 
-\section{Graphiques}
+\section{Graphiques} \label{graphiques}
 
 \begin{figure}[h!]
   \begin{center}
@@ -261,23 +269,7 @@ For j = 1 To nt
     Next
 Next
 
-'Range("J21:O100") = S()
-
-
-' insert Chart
-'Dim Cht As Chart
-'Set Cht = Charts.Add
-'With Cht
-'    .SetSourceData Source:=Sheets("Sheet1").Range("A1:B6")
-'    .ChartType = xl3DArea
-'End With
-
-
 MsgBox "Simule pour " & nt & " trajectoires."
-
-'Sheets("Dashboard").Activate
-'Range("Parametres").Select
-'Range("A13").Value = T
 
 End Sub
 
