@@ -2,12 +2,13 @@
 
 * vérifier la simulation de S pas à pas (comparer la variance simulée avec la calculée)
 * traduire en VBA
+  + écrire un test pour VBA, Excel et son graphe ne supporte plus que 250 series
 * creer un dashboard
 * sauvegarder des capture d'écran du dashboard
 * écrire la documentation 20 pages
   + méthode de reduction de variance
-  + décrire les résultats et les graphiques
-  + décrire la fonctionalité des programmes
+  + décrire les résultats et les graphiques (Nd=8 ~ 40j, t=[0,1], nt = 1000, S0 = 40, r=.05, S1=42, K=41)
+  + décrire la fonctionalité des programmes (integrale methode des trapezes, simulation pas a pas, fonctionalité de X_N)
   + montrer que les estimateurs sont non-biaisés
   + détailler les différences entre X_inf et X_N
   
