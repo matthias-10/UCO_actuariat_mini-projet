@@ -1,7 +1,7 @@
-%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ %
 % Valentin DE CRESPIN DE BILLY                      UTF-8 %
 % Matthias LANG                                30.11.2021 %
-%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ %
 
 % ~~~~~ Mathematiques financieres: Mini-projet 1 ~~~~~~~~ %
 
@@ -37,7 +37,7 @@ fprintf('%d -> Prix initial du sous jacent \n', S0)
 %1% obligation(x) = S0*(1+r)^(x-t0);
 %K = int(obligation,t0,T)/(T-t0);
 %1% bonds_T = obligation(T);
-%1% fprintf('%0.5g -> Prix d''une obligation a T\n', bonds_T)
+%1% fprintf('%0.5g -> Prix d''une obligation a T\n',bonds_T)
 
 fprintf('%0.5g -> Prix d''exercice de l''option \n', K);
 fprintf(' . . .\n')
@@ -140,13 +140,13 @@ fprintf('Son ecart type = %0.5g\n', sqrt(C_N_est_var));
 
 %% ~~~~~~~~~~~~~~~~~~~~~ graphes ~~~~~~~~~~~~~~~~~~~~~~~ %%
 
-% 1:   graphe de S; 
+% 1:   graphes de S; 
 % 2-3: histogrammes de C_inf et C_N; 
 % 4-5: boxplot des estimateurs
 
 G = "g";
 P = input(['\n' ...
-    'Pour afficher n''importe quelle graphique, tapez ' ...
+    'Pour afficher n''importe quel graphique, tapez ' ...
     'son numero <1-5> ou [Enter]. \n' ...
     'Pour quitter tapez plusieures fois [Enter]:\n'] );
 
@@ -162,7 +162,7 @@ while G~="q"
     disp("[Enter] pour continuer")
     switch P
     case 1
-        fprintf('< 1: graphe de S >\n')
+        fprintf('< 1: graphes de S >\n')
         figure(1)
         plot([t0 T],[K K], ':k', 'LineWidth',2)
         hold on
@@ -170,7 +170,7 @@ while G~="q"
         plot([t0 T],[K K], ':k', 'LineWidth',2)
         hold off
         % pour comparison, si j'epargne pour le taux r:
-        %plot([t0 T], [S0 S0*(1+r)^(T-t0)], "--k"); %obl.
+        %plot([t0 T], [S0 S0*(1+r)^(T-t0)],"--k"); %obl.
         %1% fplot(obligation, [t0 T], "-k"); 
         legend("K, le prix d''exercice", ...
                "les prix S_t des actions",...
@@ -180,7 +180,7 @@ while G~="q"
     case 2
         fprintf('< 2: histogramme de C_inf >\n')
         figure(1)
-        % E_\pi (e^-rT (X_T - K)^+ / F_O) ~ 1/nt \sum {C(T)}
+        % E_\pi (e^-rT (X_T - K)^+ / F_O) ~ 1/nt \sum{C(T)}
         histogram( C_inf );
         title("Histogramm des C(T) pour X_{infinie}");
         P=P+1; input('\n');
@@ -210,7 +210,7 @@ while G~="q"
 
     case 6
         P=input([' ~ ~ ~ ~ ~ ~\n ' ...
-            'Pour afficher n''importe quelle graphique, ' ...
+            'Pour afficher n''importe quel graphique, ' ...
             'tapez son numero <1-5> \n']);
         if ismember(P, 1:5)
             fprintf("Vous avez choisi: ")
