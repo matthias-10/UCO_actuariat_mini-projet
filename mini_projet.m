@@ -1,9 +1,7 @@
-%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
-% UTF-8                           %
-% 30.11.2021                      %
-% Valentin DE CRESPIN DE BILLY    %
-% Matthias LANG                   %
-%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
+% Valentin DE CRESPIN DE BILLY                      UTF-8 %
+% Matthias LANG                                30.11.2021 %
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
 
 % ~~~~~ Mathematiques financieres: Mini-projet 1 ~~~~~~~~ %
 
@@ -37,10 +35,10 @@ fprintf('%d -> Prix initial du sous jacent \n', S0)
 
 %1% syms func(x) %1% requires Symbolic Math Toolbox.
 %1% obligation(x) = S0*(1+r)^(x-t0);
-
 %K = int(obligation,t0,T)/(T-t0);
 %1% bonds_T = obligation(T);
 %1% fprintf('%0.5g -> Prix d''une obligation a T\n', bonds_T)
+
 fprintf('%0.5g -> Prix d''exercice de l''option \n', K);
 fprintf(' . . .\n')
 tic
