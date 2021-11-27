@@ -187,9 +187,49 @@ Toutes les fiches se trouvent dans le repository en ligne:
 
 \begin{figure}[h!]
   \begin{center}
-    \includegraphics[width=14cm]{"graphiques/hist_feat_value.jpg"}
-    \caption{Histogramme d'un èstimateur}
-    \label{hist_C_inf}
+    \includegraphics[width=14cm]{"graphiques/S.png"}
+    \caption{Les graphes de tous trajectoires, plotés avec matlab}
+    \label{fig:S}
+  \end{center}
+\end{figure}
+
+\begin{figure}[h!]
+  \begin{center}
+    \includegraphics[width=14cm]{"graphiques/hist_C_inf.png"}
+    \caption{Histogramme des simulations pour $C_{\infty}$}
+    \label{fig:hist_C_inf}
+  \end{center}
+\end{figure}
+
+\begin{figure}[h!]
+  \begin{center}
+    \includegraphics[width=14cm]{"graphiques/box_C_inf.png"}
+    \caption{Boxplot des simulations pour $C_{\infty}$}
+    \label{fig:box_C_inf}
+  \end{center}
+\end{figure}
+
+\begin{figure}[h!]
+  \begin{center}
+    \includegraphics[width=14cm]{"graphiques/hist_C_N.png"}
+    \caption{Histogramme des simulations pour $C_{N}$}
+    \label{fig:hist_C_N}
+  \end{center}
+\end{figure}
+
+\begin{figure}[h!]
+  \begin{center}
+    \includegraphics[width=14cm]{"graphiques/box_C_N.png"}
+    \caption{Boxplot des simulations pour $C_{N}$}
+    \label{fig:box_C_N}
+  \end{center}
+\end{figure}
+
+\begin{figure}[h!]
+  \begin{center}
+    \includegraphics[width=14cm]{"graphiques/Capture.PNG"}
+    \caption{le Excel dashboard}
+    \label{fig:capture}
   \end{center}
 \end{figure}
 
@@ -210,14 +250,11 @@ Toutes les fiches se trouvent dans le repository en ligne:
     xleftmargin=3.4pt,%make the frame fits in the text area. 
     xrightmargin=3.4pt,%make the frame fits in the text area.
     ]
-
 Sub Macro1()
 
+' parametres
 Dim T, n, nt, Nd As Integer
 Dim r, sigma, S0, t0 As Double
-
-Dim i, j As Integer
-
 
 r = Range("A2").Value
 sigma = Range("A3").Value
@@ -231,6 +268,34 @@ t0 = Range("A9").Value
 Dim dt As Double
 dt = ((T - t0) / n)
 
+' premier cellule de la table de trajectoires ~ t0
+Dim Srow, Scol As Integer
+Dim Scol_abc As String
+Srow = 3
+Scol_abc = "I"
+Scol = 9
+
+' worksheets
+Dim sh_dash, sh_calc, sh_s As String
+Dim sh_dash_o As Worksheet
+sh_s = "Dashboard"
+sh_dash = "Dashboard"
+Set sh_dash_o = Worksheets(sh_dash)
+
+' iteratives
+Dim i, j As Integer
+
+Dim S() As Double
+ReDim S(1 To n + 1, 1 To nt)
+Dim dW As Double
+Dim dS As Double
+Dim x As Double
+
+'effacer t et S() aines
+With Worksheets(sh_s)
+    Range(.Cells(Srow - 1, Scol), .Cells(Srow + 10000, Scol + 10000)).Delete
+End With
+
 ' afficher t
 Dim temps() As Double
 ReDim temps(n + 2)
@@ -239,21 +304,15 @@ For j = 1 To n + 2
     temps(j) = temps(j - 1) + dt
 Next
 
-Range("I3:I" & UBound(temps) + 1) = WorksheetFunction.Transpose(temps)
+Range(Scol_abc & Srow & ":" & Scol_abc & UBound(temps) + 1) = _
+    WorksheetFunction.Transpose(temps)
 
-Dim S() As Double
-ReDim S(1 To n + 1, 1 To nt)
-Dim dW As Double
-Dim dS As Double
-Dim x As Double
-
-'effacer S() aine
-
-'simuler S pas a pas
+'simuler et afficher S pas a pas
+Cells(1 + 1, 9 + 0).Value = "t"
 For j = 1 To nt
     x = S0
     i = 1
-    Cells(2 + i, 9 + j).Value = x 'S(i, j) ' copier s dans la worksheet
+    Cells(2 + i, 9 + j).Value = x
     Cells(1 + i, 9 + j).Value = "series " & j
     For i = 1 To n + 1
         If i > 1 Then
@@ -263,13 +322,50 @@ For j = 1 To nt
             dS = x * (r * dt + sigma * Sqr(x) * dW)
             'S(i, j) = S(i - 1, j) + dS
             x = x + dS 'S(i - 1, j) + dS
-            Cells(2 + i, 9 + j).Value = x  'S(i, j) ' copier s dans la worksheet
+            Cells(2 + i, 9 + j).Value = x
         End If
         S(i, j) = x
     Next
 Next
+'Range("J21:O100") = S()
 
-MsgBox "Simule pour " & nt & " trajectoires."
+
+' insert Chart
+Worksheets(sh_s).Activate
+Dim chartrange As Range
+Set chartrange = Cells(Srow, Scol + 1)  'sans t
+Set chartrange = chartrange.Resize(n + 1, nt)
+MsgBox chartrange.Address
+
+Worksheets(sh_dash).Activate
+Dim Graphe As Object
+
+'effacer graphes aines
+For Each Graphe In ActiveSheet.ChartObjects
+  Graphe.Delete
+Next Graphe
+
+Set Graphe = sh_dash_o.ChartObjects.Add( _
+    Left:=Range("A11").Left, Width:=380, _
+    Top:=Range("A11").Top, Height:=400)
+With Graphe.Chart
+    .SetSourceData chartrange
+    .PlotBy = xlColumns 'echanger x et y axes
+    .ChartType = xlLine
+    .HasTitle = True
+    .ChartTitle.Text = "Prix des actions"
+    .FullSeriesCollection(1).XValues = _
+        Range(Scol_abc & Srow & ":" & Scol_abc & UBound(temps) + 1)
+    .Axes(xlCategory).HasTitle = True
+    .Axes(xlCategory).AxisTitle.Text = "t"
+End With
+
+
+MsgBox "Simulation finie pour " & nt & " trajectoires."
+
+'Sheets("Dashboard").Activate
+'Range("Parametres").Select
+'Range("A13").Value = T
 
 End Sub
 

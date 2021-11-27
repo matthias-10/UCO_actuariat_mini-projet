@@ -3,7 +3,7 @@
 % Matthias LANG                                30.11.2021 %
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ %
 
-% ~~~~~ Mathematiques financieres: Mini-projet 1 ~~~~~~~~ %
+% ~~~~~~ Mathematiques financieres: Mini-projet 1 ~~~~~~~ %
 
 %% ~~~~~~~~~~~~~~~~~~~~ Parametres ~~~~~~~~~~~~~~~~~~~~~ %%
 
