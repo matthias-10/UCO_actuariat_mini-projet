@@ -1,6 +1,7 @@
 ## à faire
 
 * vérifier la simulation de S pas à pas (comparer la variance simulée avec la calculée)
+* ecdf au liru de histogramme?
 * traduire en VBA
   + écrire un test pour VBA, Excel et son graphe ne supporte plus que 250 series
 * creer un dashboard
