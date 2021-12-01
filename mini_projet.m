@@ -112,9 +112,6 @@ end
 duree= toc;
 fprintf('\n')
 fprintf('%d trajectoires simules\n', nt);
-fprintf('L''integrale par (t_0 - T) de X_t, ');
-    fprintf('le prix estime C(T) = %0.5g \n', C_inf_0);
-fprintf('La moyenne des X_t: C(T) = %0.5g \n', C_N_0);
 fprintf('Fini en %0.5g\n', duree);
 fprintf('\n')
 
