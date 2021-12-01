@@ -134,14 +134,14 @@ C_N_est_var = var(C_N);
 
 fprintf(['L''estimateur du C_N a t0, avec ' ...
     '%d sous-intervalles = \n%0.5g\n'], ...
-    Nd, C_N_est_mat);
+    Nd, C_N_est);
 fprintf('Son ecart type = %0.5g\n', sqrt(C_N_est_var));
 
 
 %% ~~~~~~~~~~~~~~~~~~~~~ graphes ~~~~~~~~~~~~~~~~~~~~~~~ %%
 
 % 1:   graphes de S; 
-% 2-3: histogrammes de C_inf et C_N; 
+% 2-3: ecdf de C_inf et C_N; 
 % 4-5: boxplot des estimateurs
 
 G = "g";
@@ -178,18 +178,24 @@ while G~="q"
         P=P+1; input('\n');
 
     case 2
-        fprintf('< 2: histogramme de C_inf >\n')
+        fprintf(['< 2: fonction de distribution ' ...
+            'cumulative estime'  ...
+            '\n C(T) pour X_{infinie} de C_infinie >\n'])
         figure(1)
         % E_\pi (e^-rT (X_T - K)^+ / F_O) ~ 1/nt \sum{C(T)}
-        histogram( C_inf );
-        title("Histogramm des C(T) pour X_{infinie}");
+        %histogram( C_inf );
+        ecdf( C_inf );
+        
+        title(["ecdf C(T) pour X_{infinie}"]);
         P=P+1; input('\n');
 
     case 3
-        fprintf('< 3: histogramme de C_N >\n')
+        fprintf(['< 3: fonction de distribution ' ...
+            'cumulative estime'  ...
+            '\n C(T) pour X_{infinie} de C_N >\n'])
         figure(1)
-        histogram( C_N );
-        title("Histogramm des C(T) pour X_{N}");
+        ecdf( C_N );
+        title(["ecdf C(T) pour X_{N}"]);
         P=P+1; input('\n');
 
     case 4
