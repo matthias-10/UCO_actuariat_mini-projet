@@ -183,7 +183,7 @@ while G~="q"
         %histogram( C_inf );
         ecdf( C_inf );
         
-        title(["ecdf C(T) pour X_{infinie}"]);
+        title("ecdf C(T) pour X_{infinie}");
         P=P+1; input('\n');
 
     case 3
@@ -192,7 +192,7 @@ while G~="q"
             '\n C(T) pour X_{infinie} de C_N >\n'])
         figure(1)
         ecdf( C_N );
-        title(["ecdf C(T) pour X_{N}"]);
+        title("ecdf C(T) pour X_{N}");
         P=P+1; input('\n');
 
     case 4
