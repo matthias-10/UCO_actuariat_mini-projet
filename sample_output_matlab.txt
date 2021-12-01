@@ -1,0 +1,48 @@
+>> mini-projet
+
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ 
+La programme a demarre a 01-Dec-2021 07:31:30 
+40 -> Prix initial du sous jacent 
+41 -> Prix d'exercice de l'option 
+ . . .
+
+1000 trajectoires simules
+Fini en 0.25776
+
+Les estimateurs Monte-Carlo:
+L'estimateur du C_inf a t0 = 
+0.57652
+Son ecart type = 0.87441
+L'estimateur du C_N a t0, avec 8 sous-intervalles = 
+0.68881
+Son ecart type = 1.0023
+
+Pour afficher n'importe quel graphique, tapez son numero <1-5> ou [Enter]. 
+Pour quitter tapez plusieures fois [Enter]:
+
+[Enter] pour continuer
+< 1: graphes de S >
+
+
+[Enter] pour continuer
+< 2: fonction de distribution cumulative estime
+ C(T) pour X_{infinie} de C_infinie >
+
+
+[Enter] pour continuer
+< 3: fonction de distribution cumulative estime
+ C(T) pour X_{infinie} de C_N >
+
+
+[Enter] pour continuer
+< 4: boxplot de l'estimateur C_{infinie} >
+
+
+[Enter] pour continuer
+< 5: boxplot de l'estimateur C_{N} >
+
+[Enter] pour continuer
+ ~ ~ ~ ~ ~ ~
+ Pour afficher n'importe quel graphique, tapez son numero <1-5> 
+
+>> 
