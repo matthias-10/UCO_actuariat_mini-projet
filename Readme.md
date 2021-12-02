@@ -1,5 +1,6 @@
 ## à faire
 
+* Celine: il faut programmer également les variables de controle (antithétiques) et l'intervalle de confiance
 * vérifier la simulation de S pas à pas (comparer la variance simulée avec la calculée)
 * ecdf au liru de histogramme?
 * traduire en VBA
