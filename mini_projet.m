@@ -16,7 +16,7 @@ sigma = 0.01;           % Variance partie fixe
 t0 = 0;                 % Debut de la periode
 n = 2^9;                % Nombre de intervalles
 T = 1;                  % Fin de la periode
-Nd = 8;                 % Nombre des sous-intervalles 
+% Nd = 8;                 % Nombre des sous-intervalles 
 
 nt = 1000;              % Nombre de trajectoires
 
@@ -44,20 +44,26 @@ fprintf(' . . .\n')
 tic
 
 
-%% ~~~~~~~~~~~~~~~~~~~~ Simulation ~~~~~~~~~~~~~~~~~~~~~ %%
+%% ~~~~~~~~~~~~~~~~~~~~ Simulation de 15 trajectoires - Question 1 ~~~~~~~~~~~~~~~~~~~~~ %%
 
 dt = (T-t0)/n;
 t = t0:dt:T;
 
-S = zeros(n+1,nt);
-S(1,:) = S0;
+S = zeros(15,n+1);
+S(:,1) = S0;
 
 % Simulation pas a pas
 for i = 2:(n+1)
-    dW_t = normrnd(zeros(1,nt),sqrt(dt));
-    dSi = S(i-1,:).*( r*dt + sigma*sqrt(S(i-1,:)).*dW_t );
-    S(i,:) = S(i-1,:) + dSi;
+    dW_t = normrnd(zeros(15,1),sqrt(dt));
+    dSi = S(:,i-1).*( r*dt + sigma*sqrt(S(:,i-1)).*dW_t );
+    S(:,i) = S(:,i-1) + dSi;
 end
+
+ plot([t0 T],[K K], ':k', 'LineWidth',2)
+        hold on
+        plot(t, S)
+        plot([t0 T],[K K], ':k', 'LineWidth',2)
+        hold off
 
 
 %% ~~~~~~~~~~~~~~~ prix de l'option C ~~~~~~~~~~~~~~~~~~ %%
