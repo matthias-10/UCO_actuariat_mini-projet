@@ -24,3 +24,10 @@ Je crois que j'ai rempli tous les points de la réunion, le 24 Nov [Matthias)
 * afficher tout pour le debogage
 * calcul de l'integral: ne pas utiliser une double boucle, 0.5\*S_0 + S_1 +...+ S_n + 0.5\*S_{n+1}
 * sigma est calculé par S_t -> ajuster sigma (desormais bas)
+
+
+## QUESTIONS : 
+est ce que la méthode choisie est valide ? 
+quelle sens pour la matrice ? 
+est ce que les calculs sont bons ? 
+quel type de dashboard attendez vu sur excel ? 
