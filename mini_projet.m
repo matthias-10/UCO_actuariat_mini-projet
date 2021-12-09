@@ -16,9 +16,9 @@ sigma = 0.01;           % Variance partie fixe
 t0 = 0;                 % Debut de la periode
 n = 2^9;                % Nombre de intervalles
 T = 1;                  % Fin de la periode
-% Nd = 8;                 % Nombre des sous-intervalles 
+Nd = 8;                 % Nombre des sous-intervalles 
 
-nt = 1000;              % Nombre de trajectoires
+nt = 10000;             % Nombre de trajectoires
 
 
 %% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ %%
@@ -44,26 +44,14 @@ fprintf(' . . .\n')
 tic
 
 
-%% ~~~~~~~~~~~~~~~~~~~~ Simulation de 15 trajectoires - Question 1 ~~~~~~~~~~~~~~~~~~~~~ %%
+%% ~~~~~~~~~~~~~~~~~~~~ Simulation ~~~~~~~~~~~~~~~~~~~~~ %%
 
 dt = (T-t0)/n;
 t = t0:dt:T;
 
-S = zeros(15,n+1);
-S(:,1) = S0;
-
-% Simulation pas a pas
-for i = 2:(n+1)
-    dW_t = normrnd(zeros(15,1),sqrt(dt));
-    dSi = S(:,i-1).*( r*dt + sigma*sqrt(S(:,i-1)).*dW_t );
-    S(:,i) = S(:,i-1) + dSi;
-end
-
- plot([t0 T],[K K], ':k', 'LineWidth',2)
-        hold on
-        plot(t, S)
-        plot([t0 T],[K K], ':k', 'LineWidth',2)
-        hold off
+% les premieres nt_a valeurs pour l'affichage
+nt_a = 15;
+S = zeros(n+1, nt_a);
 
 
 %% ~~~~~~~~~~~~~~~ prix de l'option C ~~~~~~~~~~~~~~~~~~ %%
@@ -71,13 +59,29 @@ end
 C_inf = zeros(1,nt);
 C_N = zeros(1,nt);
 for j = 1:nt
-    S_vec = S(:,j);
+    S_vec = zeros(n,1);
+    S_vec(1,:) = S0;
+    
+
+    %% ~~~~~~~~~~~~~ simuler pas a pas ~~~~~~~~~~~~~~~~~ %%
    
+    for i = 2:(n+1)
+        dW_t = normrnd(0,sqrt(dt));
+        dSi = S_vec(i-1).* ...
+              ( r*dt + sigma*sqrt(S_vec(i-1)).*dW_t );
+        S_vec(i) = S_vec(i-1) + dSi;
+    end
+
+    % sauvegarder les premieres nt_a actions
+    if j <= nt_a
+        S(:,j) = S_vec;
+    end
+
 
     %% ~~~~~~~~~~~~ C_inf: calcul avec X_T ~~~~~~~~~~~~~ %%
 
     % integral: l'aire de t0 a T sous S
-    X_T = 0.5*S0 + sum(S_vec(2:n,:),1) + 0.5*S_vec(n+1,:);
+    X_T = 0.5*S0 + sum(S_vec(2:n),1) + 0.5*S_vec(n+1);
     X_T = X_T/n; %ou (n+1)?
 
     C_inf_j = (X_T - K) .* ( X_T - K >= 0 );
@@ -100,7 +104,7 @@ for j = 1:nt
     warning('off', warn_id);
     % ^supprime Warning a cause de arrondir:
     index = index(1:(n/Nd):end); 
-    X_T_prim = sum(S_vec(index,:),1)/Nd;
+    X_T_prim = sum(S_vec(index),1)/Nd;
 
     C_N_j = (X_T_prim - K) .* ( X_T_prim - K >= 0 );
 
@@ -125,7 +129,7 @@ fprintf('Les estimateurs Monte-Carlo:\n')
 
 % C_inf
 C_inf_est = mean(C_inf);
-C_inf_est_var = var(C_inf);
+C_inf_est_var = var(C_inf)/nt; %/nt ?
 
 fprintf('L''estimateur du C_inf a t0 = \n%0.5g\n', ...
  C_inf_est);
@@ -133,7 +137,7 @@ fprintf('Son ecart type = %0.5g\n', sqrt(C_inf_est_var));
 
 % C_N
 C_N_est = mean(C_N);
-C_N_est_var = var(C_N);
+C_N_est_var = var(C_N)/nt; %/nt?
 
 fprintf(['L''estimateur du C_N a t0, avec ' ...
     '%d sous-intervalles = \n%0.5g\n'], ...
@@ -165,7 +169,7 @@ while G~="q"
     disp("[Enter] pour continuer")
     switch P
     case 1
-        fprintf('< 1: graphes de S >\n')
+        fprintf('< 1: quelques premiers graphes de S >\n')
         figure(1)
         plot([t0 T],[K K], ':k', 'LineWidth',2)
         hold on
