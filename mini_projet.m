@@ -18,7 +18,7 @@ n = 2^9;                % Nombre de intervalles
 T = 1;                  % Fin de la periode
 Nd = 8;                 % Nombre des sous-intervalles 
 
-nt = 10000;             % Nombre de trajectoires
+nt = 5000;              % Nombre de trajectoires
 
 
 %% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ %%
@@ -51,37 +51,37 @@ t = t0:dt:T;
 
 % les premieres nt_a valeurs pour l'affichage
 nt_a = 15;
-S = zeros(n+1, nt_a);
+S = zeros(nt_a, n+1);
 
 
 %% ~~~~~~~~~~~~~~~ prix de l'option C ~~~~~~~~~~~~~~~~~~ %%
 
-C_inf = zeros(1,nt);
-C_N = zeros(1,nt);
+C_inf = zeros(nt,1);
+C_N = zeros(nt,1);
 for j = 1:nt
-    S_vec = zeros(n,1);
-    S_vec(1,:) = S0;
+    S_vec = zeros(1, n);
+    S_vec(:, 1) = S0;
     
 
     %% ~~~~~~~~~~~~~ simuler pas a pas ~~~~~~~~~~~~~~~~~ %%
    
     for i = 2:(n+1)
         dW_t = normrnd(0,sqrt(dt));
-        dSi = S_vec(i-1).* ...
-              ( r*dt + sigma*sqrt(S_vec(i-1)).*dW_t );
+        dSi = S_vec(i-1)* ...
+              ( r*dt + sigma*sqrt(S_vec(i-1))*dW_t );
         S_vec(i) = S_vec(i-1) + dSi;
     end
 
     % sauvegarder les premieres nt_a actions
     if j <= nt_a
-        S(:,j) = S_vec;
+        S(j,:) = S_vec;
     end
 
 
     %% ~~~~~~~~~~~~ C_inf: calcul avec X_T ~~~~~~~~~~~~~ %%
 
     % integral: l'aire de t0 a T sous S
-    X_T = 0.5*S0 + sum(S_vec(2:n),1) + 0.5*S_vec(n+1);
+    X_T = 0.5*S0 + sum(S_vec(2:n)) + 0.5*S_vec(n+1);
     X_T = X_T/n; %ou (n+1)?
 
     C_inf_j = (X_T - K) .* ( X_T - K >= 0 );
@@ -104,7 +104,7 @@ for j = 1:nt
     warning('off', warn_id);
     % ^supprime Warning a cause de arrondir:
     index = index(1:(n/Nd):end); 
-    X_T_prim = sum(S_vec(index),1)/Nd;
+    X_T_prim = sum(S_vec(index))/Nd;
 
     C_N_j = (X_T_prim - K) .* ( X_T_prim - K >= 0 );
 
