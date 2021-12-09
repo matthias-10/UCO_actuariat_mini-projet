@@ -1,6 +1,9 @@
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ %
 % Valentin DE CRESPIN DE BILLY                      UTF-8 %
 % Matthias LANG                                30.11.2021 %
+% requires:                                               %
+% - Statistics and Machine Learning Toolbox               %
+% - Symbolic Math Toolbox                                 %
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ %
 
 % ~~~~~~ Mathematiques financieres: Mini-projet 1 ~~~~~~~ %
@@ -18,7 +21,7 @@ n = 2^9;                % Nombre de intervalles
 T = 1;                  % Fin de la periode
 Nd = 8;                 % Nombre des sous-intervalles 
 
-nt = 5000;              % Nombre de trajectoires
+nt = 1000;              % Nombre de trajectoires
 
 
 %% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ %%
@@ -121,24 +124,43 @@ for j = 1:nt
 end
 
 
+%% ~~~~~~~~~~~~~~~~~~~ estimateurs ~~~~~~~~~~~~~~~~~~~~~ %%
+
+% C_inf
+C_inf_est = mean(C_inf);
+C_inf_est_var = var(C_inf)/nt; %/nt ?
+
+% X_inf
+X_inf_mu = mean(X_inf_v);
+
+% C_N
+C_N_est = mean(C_N);
+C_N_est_var = var(C_N)/nt; %/nt?
+
+% X_N
+X_N_mu = mean(X_N_v);
+
+
 %% ~~~~~~~ estimateurs et intervalle de confiance ~~~~~~ %%
+%                 (seulement pour C_inf)                  %
 
-alpha = 0.05;
+alpha = 0.05; % niveau au risque
 
-%%% variable normale
-% muhat = mean(expenditures)
-% 
-% KI_gaussian = muhat - sd(expenditures)/sqrt(n)*qnorm(c(1-alpha/2, alpha/2))
+v = nt/(nt-1)*var(X_inf_v); %variance d'echantillonnage
+
+%%% variable supossée normale
+IC_gauss = [X_inf_mu - sqrt(v/nt)*norminv(1-alpha/2) ...
+            X_inf_mu - sqrt(v/nt)*norminv(alpha/2) ];
 
 %%% bootstrap
-% sims = 10^4
-% 
-% simulate = function(){
-%   return(mean(sample(expenditures, n, replace = T))- muhat)
-% }
-% 
-% dat = replicate(sims, simulate())
-% KI_bootstrapp = muhat - quantile(dat, c(1-alpha/2, alpha/2))
+sims = 10^3;
+y = zeros(1, sims);
+for i = 1:sims
+    y(i) = mean(randsample(X_inf_v,nt,true)) - X_inf_mu;
+end
+
+IC_boot =  [X_inf_mu - quantile(y,1-alpha/2) ...
+            X_inf_mu - quantile(y,alpha/2) ];
 
 
 %% ~~~~~~~~~~~~~~ variable de controle ~~~~~~~~~~~~~~~~~ %%
@@ -156,17 +178,9 @@ fprintf('\n')
 
 fprintf('Les estimateurs Monte-Carlo:\n')
 
-% C_inf
-C_inf_est = mean(C_inf);
-C_inf_est_var = var(C_inf)/nt; %/nt ?
-
 fprintf('L''estimateur du C_inf a t0 = \n%0.5g\n', ...
  C_inf_est);
 fprintf('Son ecart type = %0.5g\n', sqrt(C_inf_est_var));
-
-% C_N
-C_N_est = mean(C_N);
-C_N_est_var = var(C_N)/nt; %/nt?
 
 fprintf(['L''estimateur du C_N a t0, avec ' ...
     '%d sous-intervalles = \n%0.5g\n'], ...
@@ -221,7 +235,14 @@ while G~="q"
         % E_\pi (e^-rT (X_T - K)^+ / F_O) ~ 1/nt \sum{C(T)}
         %histogram( C_inf );
         ecdf( X_inf_v );
-        
+        hold on 
+        plot([K K],[0 1], 'k')
+        plot([min(X_inf_v) max(X_inf_v)], [.5 .5],':b')
+        x = [min(X_inf_v):.1:max(X_inf_v)];
+        nor = normcdf(x,X_inf_mu,v);
+        plot(x,nor,':r')
+        hold off
+        legend("ecdf", "K", "P=50%", "cdf normal")
         title("ecdf X(T) pour X_{infinie}");
         P=P+1; input('\n');
 
@@ -231,6 +252,11 @@ while G~="q"
             '\n C(T) pour X_{infinie} de C_N >\n'])
         figure(1)
         ecdf( X_N_v );
+        hold on 
+        plot([K K],[0 1], 'k')
+        plot([min(X_N_v) max(X_N_v)], [.5 .5],':b')
+        hold off
+        legend("ecdf", "K", "P=50%")
         title("ecdf X(T) pour X_{N}");
         P=P+1; input('\n');
 
