@@ -31,3 +31,4 @@ est ce que la méthode choisie est valide ?
 quelle sens pour la matrice ? 
 est ce que les calculs sont bons ? 
 quel type de dashboard attendez vu sur excel ? 
+mieux utiliser X au lieu de C pour intervalle et variable de controle?

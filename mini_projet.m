@@ -49,15 +49,17 @@ tic
 dt = (T-t0)/n;
 t = t0:dt:T;
 
-% les premieres nt_a valeurs pour l'affichage
+% les premieres nt_a valeurs pour l'affichage plus tard
 nt_a = 15;
 S = zeros(nt_a, n+1);
 
 
-%% ~~~~~~~~~~~~~~~ prix de l'option C ~~~~~~~~~~~~~~~~~~ %%
+%% ~~~~~~~~~~~~~~~~ prix de l'option C ~~~~~~~~~~~~~~~~~ %%
 
 C_inf = zeros(nt,1);
 C_N = zeros(nt,1);
+X_inf_v = zeros(nt,1);
+X_N_v = zeros(nt,1);
 for j = 1:nt
     S_vec = zeros(1, n);
     S_vec(:, 1) = S0;
@@ -84,13 +86,14 @@ for j = 1:nt
     X_T = 0.5*S0 + sum(S_vec(2:n)) + 0.5*S_vec(n+1);
     X_T = X_T/n; %ou (n+1)?
 
-    C_inf_j = (X_T - K) .* ( X_T - K >= 0 );
+    C_inf_j = (X_T - K) * ( X_T - K >= 0 );
     C_inf_0 = exp(-r*T)*C_inf_j;
 
     % ~ Estimateur ~
     % C_inf * exp(-rT) est une martingale donc 
     % E[exp(-rT)*C_inf]= C_inf(S_0)
     
+    X_inf_v(j)=X_T;
     C_inf(j)=C_inf_0;
 
 
@@ -106,15 +109,41 @@ for j = 1:nt
     index = index(1:(n/Nd):end); 
     X_T_prim = sum(S_vec(index))/Nd;
 
-    C_N_j = (X_T_prim - K) .* ( X_T_prim - K >= 0 );
+    C_N_j = (X_T_prim - K) * ( X_T_prim - K >= 0 );
 
     % C_N * exp(-rT) est une martingale donc 
     % E[exp(-rT)*C_N]= C_N(S_0)
     C_N_0 = exp(-r*T)*C_N_j;
 
+    X_N_v(j)=X_T_prim;
     C_N(j)=C_N_0;
 
 end
+
+
+%% ~~~~~~~ estimateurs et intervalle de confiance ~~~~~~ %%
+
+alpha = 0.05;
+
+%%% variable normale
+% muhat = mean(expenditures)
+% 
+% KI_gaussian = muhat - sd(expenditures)/sqrt(n)*qnorm(c(1-alpha/2, alpha/2))
+
+%%% bootstrap
+% sims = 10^4
+% 
+% simulate = function(){
+%   return(mean(sample(expenditures, n, replace = T))- muhat)
+% }
+% 
+% dat = replicate(sims, simulate())
+% KI_bootstrapp = muhat - quantile(dat, c(1-alpha/2, alpha/2))
+
+
+%% ~~~~~~~~~~~~~~ variable de controle ~~~~~~~~~~~~~~~~~ %%
+
+% a faire
 
 
 %% ~~~~~~~~~~~~ affichage des estimateurs ~~~~~~~~~~~~~~ %%
@@ -191,9 +220,9 @@ while G~="q"
         figure(1)
         % E_\pi (e^-rT (X_T - K)^+ / F_O) ~ 1/nt \sum{C(T)}
         %histogram( C_inf );
-        ecdf( C_inf );
+        ecdf( X_inf_v );
         
-        title("ecdf C(T) pour X_{infinie}");
+        title("ecdf X(T) pour X_{infinie}");
         P=P+1; input('\n');
 
     case 3
@@ -201,8 +230,8 @@ while G~="q"
             'cumulative estime'  ...
             '\n C(T) pour X_{infinie} de C_N >\n'])
         figure(1)
-        ecdf( C_N );
-        title("ecdf C(T) pour X_{N}");
+        ecdf( X_N_v );
+        title("ecdf X(T) pour X_{N}");
         P=P+1; input('\n');
 
     case 4
