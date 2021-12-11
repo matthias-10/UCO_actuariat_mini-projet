@@ -58,3 +58,13 @@ Discussion similaire pour la calculation de dWt, autre décision:
 Auch erwähnen das Plot S nur für 15 geplottet wird
 
 Anhand des Boxplots sieht man dass mit dem gewählten K Median Gewinn möglich ist (Mean sogar noch höher) -> K zu hoch als erwartungswert S zu T
+
+IC_gauss wurde nicht gemacht, da bootstrap auch bei verletzten Modellannahmen zu richtigen Ergebnissen geführt hat, was beim Testen hilft. Allerdings scheint die Normalverteilungsannahme optisch bei Bild 2 zu passen, und auch die beiden CI sind quasi gleich
+
+
+% l'erreur relatif à S_t dépend que de dt, alors avec dt desormais
+% petit pas de souci (d'ailleurs: interpolation lineaire, simuler,
+% choisir N n/a a partie de G, prendre le prix dernier)
+
+
+Vorteil variable antithetique: 2 Werte pro boucle pas a pas
