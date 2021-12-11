@@ -59,7 +59,7 @@ Auch erwähnen das Plot S nur für 15 geplottet wird
 
 Anhand des Boxplots sieht man dass mit dem gewählten K Median Gewinn möglich ist (Mean sogar noch höher) -> K zu hoch als erwartungswert S zu T
 
-IC_gauss wurde nicht gemacht, da bootstrap auch bei verletzten Modellannahmen zu richtigen Ergebnissen geführt hat, was beim Testen hilft. Allerdings scheint die Normalverteilungsannahme optisch bei Bild 2 zu passen, und auch die beiden CI sind quasi gleich
+IC_gauss wurde gemacht da TCL (siehe auch Bild 2), bootstrap bei C weil keine normal verteilung des Schätzer mehr angenommen werden kann.
 
 
 % l'erreur relatif à S_t dépend que de dt, alors avec dt desormais

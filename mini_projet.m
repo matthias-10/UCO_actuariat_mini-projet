@@ -18,11 +18,11 @@ r = 0.05;               % Taux d'interet sous risque neutre
 sigma = 0.01;           % Variance partie fixe
 
 t0 = 0;                 % Debut de la periode
-n = 2^3;                % Nombre de intervalles
+n = 2^9;                % Nombre de intervalles
 T = 1;                  % Fin de la periode
 Nd = 8;                 % Nombre des sous-intervalles 
 
-nt = 10;              % Nombre de trajectoires
+nt = 1000;              % Nombre de trajectoires
 
 alpha = 0.05;           % niveau au risque
 
@@ -69,8 +69,9 @@ for i = 2:(n+1)
     S(:,i)      =    S(:,i-1) + dSi;
     
     % variables antithetiques
+    dWt_a = -1*dWt;
     dS_anti = S_anti(:,i-1).* ...
-          ( r*dt + sigma*sqrt(S_anti(:,i-1)).*(-1*dWt) );
+             ( r*dt + sigma*sqrt(S_anti(:,i-1)).*dWt_a );
     S_anti(:,i) = S_anti(:,i-1) + dS_anti;
     %S_anti(:,i) = S_anti(:,i-1) - dSi;
 end
@@ -128,13 +129,15 @@ X_prim_mu = mean(X_prim);
 v = nt/(nt-1)*var(X); % variance d'echantillonnage
 
 %%% variable supossée normale
-X_IC_gauss = [X_mu - sqrt(v/nt)*norminv(1-alpha/2) ...
-              X_mu - sqrt(v/nt)*norminv(alpha/2) ];
+X_IC_gauss = [X_mu + sqrt(v/nt)*norminv(alpha/2) ...
+              X_mu + sqrt(v/nt)*norminv(1-alpha/2) ];
 
 % variable antithetique
 X_a_mu = mean([X;X_a]);
-X_a_IC_gauss = [X_a_mu - sqrt(v/nt)*norminv(1-alpha/2) ...
-                X_a_mu - sqrt(v/nt)*norminv(alpha/2)];
+na = 2*nt;
+va = na/(na-1)*var([X;X_a]);
+X_a_IC_gauss = [X_a_mu + sqrt(va/na)*norminv(alpha/2) ...
+                X_a_mu + sqrt(va/na)*norminv(1-alpha/2)];
 
 %%% bootstrap pour C
 sims = 10^3;
@@ -143,23 +146,45 @@ for i = 1:sims
     y(i) = mean(randsample(C,nt,true)) - C_mu;
 end
 
-C_IC_boot =  [C_mu - quantile(y,1-alpha/2) ...
-              C_mu - quantile(y,alpha/2) ];
+C_IC_boot =  [C_mu + quantile(y,alpha/2) ...
+              C_mu + quantile(y,1-alpha/2) ];
 
 
 %% ~~~~~~~~~~~~~~ variable de controle ~~~~~~~~~~~~~~~~~ %%
 %                (seulement pour X_inf)                   %
 
-% E(Y) = E(X)
-% Z = X - lambda * (Y - E(Y))
+
+% on pourrai utiliser au lieu de la var. antithetique la
+% variable de controle suivante
+
+% E(Y) = E(X) [=~ X_a_mu]
+Y = X_a;
+EY = X_a_mu;
+
+p = corr(X, Y); 
+%bien entendu, les deux sont au-peu-pres -1 correles
+
 % optimum: lambda =~ corr(X,Y)*(Var(X)/Var(Y))^.5
+lambda = p*(var(X)/var(Y))^.5;
+Z = X - lambda * (Y - EY);
 
-%Y = 2*mean(X) - X;
+Z_a_mu = mean(Z); %([X;Z]);
+na = nt;%2*nt;
+va = na/(na-1)*var(Z); %([X;Z]);
+Z_a_IC_gauss = [Z_a_mu + sqrt(va/na)*norminv(alpha/2) ...
+                Z_a_mu + sqrt(va/na)*norminv(1-alpha/2)];
 
-% si S serait simule avec une variable antithetique,
-% cela correspond a:
+plot(sort(Z))
+hold on 
+plot(sort(X))
+plot([1 na],[K K], '--k', 'LineWidth',2)
+hold off
+title("X vs variable de controle Z")
+legend("Z","X","Z")
 
-
+% Avantage: IC tres etroite
+% Probleme: K est loin hors de ic, mais EY est dedans ?
+% Peut-etre pcq outliers a cause de la variance(sqrt(S)) ?
 
 %% ~~~~~~~~~~~~ affichage des estimateurs ~~~~~~~~~~~~~~ %%
 
@@ -181,15 +206,15 @@ fprintf(['L''estimateur du C_N a t0, avec ' ...
     Nd, C_0_prim_est);
 fprintf('Son ecart type = %0.5g\n', sqrt(C_prim_est_var));
 
-fprintf('\n ~ Des ntervalles de Confiance ~ \n');
+fprintf('\n ~ Des intervalles de Confiance ~ \n');
 fprintf('L''intervalle de confiance de X (normal):\n');
 X_IC_gauss
 fprintf('La meme intervalle avec var. antithetiques:\n');
 X_a_IC_gauss
+fprintf('L''intervalle de confiance de Z (normal):\n');
+Z_a_IC_gauss
 fprintf('L''intervalle de confiance de C (bootstrap):\n');
 C_IC_boot
-x
-
 
 %% ~~~~~~~~~~~~~~~~~~~~~ graphes ~~~~~~~~~~~~~~~~~~~~~~~ %%
 
@@ -307,4 +332,7 @@ end
 if n*nt > 5000*5000
     warning("Donnees trop grandes pour affichage"); 
 end
+
+fprintf("\n ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ \n")
+fprintf(" ~   MERCI POUR VOTRE ATTENTION    ~")
 fprintf("\n ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ \n")
