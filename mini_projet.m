@@ -58,14 +58,15 @@ S = zeros(nt, n+1);
 % Methode de Euler
 
 S(:, 1) = S0;
-S_anti = S; 
+S_anti = S;
+VC = S;
 for i = 2:(n+1)
     dWt = normrnd(zeros(nt,1),sqrt(dt));
     dSi = S(:,i-1).* ...
           ( r*dt + sigma*sqrt(S(:,i-1)).*dWt );
     S(:,i)      =    S(:,i-1) + dSi;
     
-    % variables antithetiques
+    % variable antithetique
 
     dWt_a = -1*dWt;
     dS_anti = S_anti(:,i-1).* ...
@@ -73,6 +74,12 @@ for i = 2:(n+1)
     %dS_anti = S(:,i-1).* ...
     %         ( r*dt + sigma*sqrt(S(:,i-1)).*dWt_a );
     S_anti(:,i) = S_anti(:,i-1) + dS_anti;
+
+    % variable de controle
+    dWt = normrnd(zeros(nt,1),sqrt(dt));
+    dSi = VC(:,i-1).* ...
+          ( r*dt + sigma*sqrt(S(:,i-1)).*dWt );
+    VC(:,i)      =    VC(:,i-1) + dSi;
 end
 
 %% ~~~~~~~~~~~~~~ C_inf: calcul avec X_T ~~~~~~~~~~~~~~~ %%
@@ -83,8 +90,10 @@ X = (0.5*S0 + sum(S(:,2:n),2) + 0.5*S(:,n+1))/n;
 C = (X - K) .* logical( X - K >= 0 );
 C_0 = exp(-r*T)*C;
 
-% avec variables antithetiques
+% avec la variable antithetique
 X_a = (0.5*S0 + sum(S_anti(:,2:n),2) + 0.5*S_anti(:,n+1))/n;
+% avec la variable de controle
+X_vc = (0.5*S0 + sum(VC(:,2:n),2) + 0.5*VC(:,n+1))/n;
 
 %% ~~~~~~~~~~~~ C_N: calcul avec X_T_prim ~~~~~~~~~~~~~~ %%
 
@@ -138,6 +147,11 @@ va = na/(na-1)*var([X;X_a]);
 X_a_IC_gauss = [X_ab_mu + sqrt(va/na)*norminv(alpha/2) ...
                 X_ab_mu + sqrt(va/na)*norminv(1-alpha/2)];
 
+% efficace ?
+co = cov([X X_a]);
+fprintf(['\nLa covariance entre X et la variable '...
+        'antithetique est: %0.5g\n'], co(2,2))
+
 %%% bootstrap pour C
 sims = 10^3;
 y = zeros(1, sims);
@@ -154,12 +168,13 @@ C_IC_boot =  [C_mu + quantile(y,alpha/2) ...
 
 
 % on pourrai utiliser au lieu de la var. antithetique la
-% variable de controle suivante
+% variable de controle suivante et vice-versa
 
 % E(Y) ~= E(X) ~= E(Z) =~ mean(X_a)
 
-EY = mean(X_a);
-Y = 2*EY - X_a;
+EY = mean(X_vc); %ou X_a
+Y = X_vc;
+%Y = 2*EY - X_vc; % seulement pour X_a
 
 p = corr(X, Y); 
 %bien entendu, les deux sont au-peu-pres 1 correles
@@ -173,6 +188,11 @@ va = na/(na-1)*var(Z);
 
 Z_IC_gauss = [EY + sqrt(va/na)*norminv(alpha/2) ...
               EY + sqrt(va/na)*norminv(1-alpha/2)];
+
+% efficace ?
+fprintf(['\nLa correlation entre X et la variable '...
+        'de controle est: %0.5g\n'], corr(X,X_vc))
+
 
 %% ~~~~~~~~~~~~ affichage des estimateurs ~~~~~~~~~~~~~~ %%
 
@@ -206,7 +226,7 @@ C_IC_boot
 
 %% ~~~~~~~~~~~~~~~~~~~~~ graphes ~~~~~~~~~~~~~~~~~~~~~~~ %%
 
-nt_a = 15; % graphes de S affiches
+nt_a = 1; % graphes de S affiches
 % 1:   graphes de S; 
 % 2-3: ecdf de C_inf et C_N; 
 % 4-5: boxplot des estimateurs
@@ -236,6 +256,7 @@ while G~="q"
         hold on
         plot(t, S(1:nt_a,:),'b')
         plot(t, S_anti(1:nt_a,:), 'r:')
+        plot(t, VC(1:nt_a,:),'g--')
         % probleme si nt < nt_a
         plot([t0 T],[K K], '--k', 'LineWidth',2)
         hold off
@@ -245,6 +266,7 @@ while G~="q"
         legend("K, le prix d''exercice", ...
                "les prix S_t des actions",...
                "les variables antithetiques",...
+               "les variables de controle",...
                "Location","northwest");
         if n*nt > 5000*5000; G="q"; end
         P=P+1; input('\n');
@@ -323,7 +345,7 @@ while G~="q"
         % explication: pour X grand Y est plus petit
         scatter(X,Y);
         hold on; plot([36 48],[36 48],'-k');
-        plot(X_mu,X_a_mu,'*r','LineWidth',2);
+        plot(X_mu,EY,'*r','LineWidth',2);
         legend("X-Y en pair","X=Y","les moyennes"); 
         hold off
         xlabel("X")
