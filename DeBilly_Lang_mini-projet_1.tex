@@ -3,7 +3,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage[utf8]{inputenc}
-\usepackage[francais]{babel}
+\usepackage[french]{babel}
 \usepackage{graphicx}
 \usepackage{microtype} 
 \usepackage[onehalfspacing]{setspace}
@@ -15,10 +15,17 @@
 \usepackage{listingsutf8}
 \usepackage{dsfont}
 \usepackage{appendix}
+\usepackage{amsmath}
 \usepackage{hyperref}
 \usepackage{mathtools, amssymb}
 \usepackage[usenames,dvipsnames]{color}
 
+% \begin{equation}
+% \begin{split}
+%     \dbx & =\dbx[3cm] \\
+%     & =\dbx
+% \end{split}
+% \end{equation}
 
 \definecolor{MyDarkGreen}{rgb}{0.0,0.4,0.0}
 \lstloadlanguages{Matlab}
@@ -85,68 +92,69 @@
 
 \section{Calculer le prix du sous-jacent}
 
-\begin{equation} \label{1} 
-dS_t~=~S_t(rdt+\sigma \sqrt{S_t} dW_t) 
-\end{equation}
+Nous avons essayé d'atteindre une équation qui ne dèpend que des variables connues comme la formule de Black-Scholes.
+Cela n'a pas fonctionné.
 
-\begin{equation} \label{2}
-\begin{multlined}
-     \iff \frac{dS_t}{S_t} = rdt+\sigma \sqrt{S_t} dW_t
-\end{multlined}
-\end{equation}
+\begin{align}%equation} \label{1} 
+dS_t  &=  S_t(rdt+\sigma \sqrt{S_t} dW_t) \\
+     \iff \frac{dS_t}{S_t}  &=  rdt+\sigma \sqrt{S_t} dW_t
+\end{align}
 
 
 On prend l'équation 1:
-\begin{equation} \label{3}
-\begin{multlined}
-= dS_t~=~S_trdt+\sigma S_t^{1.5} dW_t \\
-\text{Puis} \\
-d \langle S_t,~~ S_t\rangle 
-=\langle dS_t,~~ dS_t\rangle ~=\\
-=\langle S_trdt+\sigma S_t^{1.5} dW_t,~~
+%\begin{equation} \label{3}
+%\begin{multlined}
+\begin{align*}
+= dS_t~=~S_trdt+\sigma S_t^{1.5} dW_t ~~
+\text{; Puis} \\
+d \langle S_t &, ~ S_t\rangle \\
+=\langle dS_t &,~ dS_t\rangle ~=\\
+=\langle S_trdt+\sigma S_t^{1.5} dW_t &,~
          S_trdt+\sigma S_t^{1.5} dW_t \rangle ~=\\
-=\langle \sigma S_t^{1.5} dW_t,~~
+=\langle \sigma S_t^{1.5} dW_t &,~
          \sigma S_t^{1.5} dW_t \rangle ~=\\
-=S_t^3 \sigma^2 \langle dW_t,~~ dW_t \rangle ~=\\
+=S_t^3 \sigma^2 \langle dW_t &,~  dW_t \rangle ~=\\
 =S_t^3 \sigma^2 dt
-\end{multlined}
-\end{equation}
+\end{align*}
 
 
-
-\begin{equation} \label{4}
-\begin{multlined}
-\text{On pose: } X_t = ln(S_t) \\
+On pose: 
+$X_t = ln(S_t)$
+%\begin{equation} \label{4}
+%\begin{multlined}
+\begin{align}
 \text{Formule d'Ito: } dln(S_t) = \frac{dS_t}{S_t} + \frac{1}{2} \frac{-1}{S_t^2}d \langle S_t, ~S_t \rangle \\
-\text{Avec les équations 2 et 3:} \\
-dln(S_t) = rdt + \sigma \sqrt{S_t} dW_t - \frac{1}{2}S_t \sigma^2 dt ~= \\
-= (r - \frac{1}{2}S_t\sigma^2)dt + \sigma\sqrt{S_t}dW_t
-\end{multlined}
-\end{equation}
+\end{align}
+Avec les équations 2 et 3:
+\begin{align}
+dln(S_t) = 
+rdt + \sigma \sqrt{S_t} dW_t - \frac{1}{2}S_t \sigma^2 dt =
+(r - \frac{1}{2}S_t\sigma^2)dt + \sigma\sqrt{S_t}dW_t
+\end{align}
 
 
-\begin{equation} \label{5}
-\begin{multlined}
-ln( \frac{S_t}{S_0} ) = ln(S_t)-ln(S_0) = \int_0^t dln(S_u) = \\
-= \int_0^t (r-\frac{1}{2} S_t \sigma^2)du~+~\int_0^t \sigma \sqrt{S_t}dW_t \\
-\dots
-\end{multlined}
-\end{equation}
-
+\begin{align*}
+ln( \frac{S_t}{S_0} ) 
+&= ln(S_t)-ln(S_0) = \int_0^t dln(S_u) = \\
+&= \int_0^t (r-\frac{1}{2} S_t \sigma^2)du~+~\int_0^t \sigma \sqrt{S_t}dW_t \\
+&=\dots
+\end{align*}
 Donc on ne peut pas facilement dériver une formule pour le prix comme ça, qui dépend que des variables fixées, mais on peut le simuler pas à pas en utilisant (1):
 
 \begin{equation} \label{6}
-\begin{multlined}
-S_0 ~\text{soit connu} \\
-dS_0 = S_0(rdt + \sigma \sqrt{S_0} dW_0) \\
-S_1 \approx S_0 + dS_0 \\
-dS_1 = S_1(rdt + \sigma \sqrt{S_1} dW_1) \\
-S_2 \approx S_1 + dS_1 \\
+\begin{split}
+S_0  &~\text{soit connu} \\
+dS_0 &= S_0(rdt + \sigma \sqrt{S_0} dW_0) \\
+S_1  &\approx S_0 + dS_0 \\
+dS_1 &= S_1(rdt + \sigma \sqrt{S_1} dW_1) \\
+S_2  &\approx S_1 + dS_1 \\
 \dots
-\end{multlined}
+\end{split}
 \end{equation}
 
 
+\subsection{ecdf}
+Sieht Gaussian aus -> KI damit probieren, aber keine richtige Normalverteilung, also bootstrap!
 
 \subsection{Réduction de la variance du éstimateur}
 

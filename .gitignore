@@ -1,3 +1,5 @@
+*.asv
+*.synctex*
 *.log 
 *.bcf 
 *.fdb* 
@@ -8,6 +10,8 @@
 *.blg 
 *.out
 *.acr 
+*.idx
+*.xlsm#
 *.run.xml
 *.ipynb*
 Latex_Vorlagen
