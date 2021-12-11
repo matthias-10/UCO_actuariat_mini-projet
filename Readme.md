@@ -68,3 +68,15 @@ IC_gauss wurde gemacht da TCL (siehe auch Bild 2), bootstrap bei C weil keine no
 
 
 Vorteil variable antithetique: 2 Werte pro boucle pas a pas
+
+
+figure 6 et 6.5: 
+% Avantage: IC tres etroite
+        % Probleme: K est loin hors de ic, mais EY est dedans ?
+        % Peut-etre pcq outliers a cause de la variance(sqrt(S)) ?
+        input('\n');
+        % explication: pour X grand Y est plus petit
+E!=E <> utiliser EX au lieu de EY, variance ist in eine Richtung größer!
+Sie auch Grafik 6 wo Z am Ende einen Schwanz hat: Wenn sich X positiv von der Mitte entfernt, dann mit größerer Varianz als X_a nach unten!
+Nach der gleichen Rechnung ist K kein fairer Preis
+wenn man dS_anti l. 74 ändert, sodass X_a gleiche Varianz wie X hat, hat Z eine normalere Form. Allerdings ist K immer noch verzerrt.
