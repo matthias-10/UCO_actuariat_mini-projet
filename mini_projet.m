@@ -16,7 +16,7 @@ sigma = 0.01;           % Variance partie fixe
 
 t0 = 0;                 % Debut de la periode
 n = 2^9;                % Nombre de intervalles
-T = 1;                  % Fin de la periode
+T = 5;                  % Fin de la periode
 Nd = 8;                 % Nombre des sous-intervalles 
 
 nt = 10000;             % Nombre de trajectoires
@@ -64,9 +64,9 @@ for i = 2:(n+1)
     dWt = normrnd(zeros(nt,1),sqrt(dt));
     dSi = S(:,i-1).* ...
           ( r*dt + sigma*sqrt(S(:,i-1)).*dWt );
-    S(:,i)      =    S(:,i-1) + dSi;
+    S(:,i) = S(:,i-1) + dSi;
     
-    % variable antithetique
+    % variable antithetique:
 
     dWt_a = -1*dWt;
     dS_anti = S_anti(:,i-1).* ...
@@ -75,13 +75,11 @@ for i = 2:(n+1)
     %         ( r*dt + sigma*sqrt(S(:,i-1)).*dWt_a );
     S_anti(:,i) = S_anti(:,i-1) + dS_anti;
 
-    % variable de controle
+    % variable de controle:
+
     dWt_vc = normrnd(zeros(nt,1),sqrt(dt));
-    %scatter(dWt_vc,dWt)
     dWt_vc = dWt_vc + dWt_vc ...
               .*sign(dWt).*(sign(dWt_vc) - sign(dWt));
-    %scatter(dWt_vc,dWt)
-             
     dSi = VC(:,i-1).* ...
           ( r*dt + sigma*sqrt(S(:,i-1)).*dWt_vc );
     VC(:,i)      =    VC(:,i-1) + dSi;
@@ -256,10 +254,11 @@ while G~="q"
     disp("[Enter] pour continuer")
     switch P
     case 1
-        fprintf('< 1: quelques premiers graphes de S >\n')
+        fprintf('< 1: quelques premiers graphes de S >')
         figure(1)
         plot([t0 T],[K K], ':k', 'LineWidth',2)
         hold on
+        plot(t, obligation(t))
         plot(t, S(1:nt_a,:),'b')
         plot(t, S_anti(1:nt_a,:), 'r:')
         plot(t, VC(1:nt_a,:),'g--')
@@ -270,20 +269,21 @@ while G~="q"
         %plot([t0 T], [S0 S0*(1+r)^(T-t0)],"--k"); %obl.
         %1% fplot(obligation, [t0 T], "-k"); 
         legend("K, le prix d''exercice", ...
+               "obligation (sans risque)", ...
                "les prix S_t des actions",...
                "les variables antithetiques",...
                "les variables de controle",...
                "Location","northwest");
         
         if n*nt > 5000*5000; G="q"; end
-        P=P+1; input('\n');
+        P=P+1; input('\n\n');
     
     case 2
         if n*nt > 5000*5000; G="q"; end
         
         fprintf(['< 2: fonction de distribution ' ...
             'cumulative estime'  ...
-            '\n C(T) pour X_{infinie} de C_infinie >\n'])
+            '\n C(T) pour X_{infinie} de C_infinie >'])
         figure(1)
         % E_\pi (e^-rT (X_T - K)^+ / F_O) ~ 1/nt \sum{C(T)}
         %histogram( C_inf );
@@ -299,14 +299,14 @@ while G~="q"
         legend("ecdf", "K", "P=50%", "cdf normal")
         title("ecdf X(T) pour X_{infinie}");
         
-        P=P+1; input('\n');
+        P=P+1; input('\n\n');
 
     case 3
         if n*nt > 5000*5000; G="q"; end
         
         fprintf(['< 3: fonction de distribution ' ...
             'cumulative estime'  ...
-            '\n C(T) pour X_{infinie} de C_N >\n'])
+            '\n C(T) pour X_{infinie} de C_N >'])
         figure(1)
         ecdf( X_prim );
         hold on 
@@ -316,36 +316,36 @@ while G~="q"
         legend("ecdf", "K", "P=50%")
         title("ecdf X(T) pour X_{N}");
         
-        P=P+1; input('\n');
+        P=P+1; input('\n\n');
 
     case 4
         if n*nt > 5000*5000; G="q"; end
         
         fprintf(['< 4: boxplot de l''estimateur ' ...
-                 'C_{infinie} >\n'])
+                 'C_{infinie} >'])
         figure(1)
         boxplot( C_0 );
         title('boxplot de C_{infinie} a T')
         ylabel('C_T, valeurs actualisees')
         
-        P=P+1; input('\n');
+        P=P+1; input('\n\n');
 
     case 5
         if n*nt > 5000*5000; G="q"; end
         
-        fprintf('< 5: boxplot de l''estimateur C_{N} >\n\n')
+        fprintf('< 5: boxplot de l''estimateur C_{N} >')
         figure(1)
         boxplot ( C_0_prim );
         title('boxplot de C_{N} a T')
         
-        P=P+1; input('\n');
+        P=P+1; input('\n\n');
     
     case 6
         if n*nt > 5000*5000; G="q"; end
         
         fprintf('< 6: Problematique: >\n')
         fprintf(['L''IC de la variable de controle ' ...
-                 'ne semble pas etre exact.\n'])
+                 'ne semble pas etre exact.'])
         
         plot(sort(Z))
         hold on 
@@ -355,11 +355,11 @@ while G~="q"
         title("X vs variable de controle Z")
         legend("Z","X","Z")
         
-        input('\n');
+        input('\n... 6.5 < scatter >');
         
         scatter(X,Y);
         hold on; 
-        plot([36 48],[36 48],'-k');
+        plot([min(X) max(X)],[min(X) max(X)],'-k');
         plot(X_mu,EY,'*r','LineWidth',2);
         legend("X-Y en pair","X=Y","les moyennes"); 
         hold off
@@ -369,15 +369,22 @@ while G~="q"
         P=P+1; input('\n');
     case 7
         if n*nt > 5000*5000; G="q"; end
-
+        
+         fprintf('< 7: ICs (normales) >')
         plot([X_mu X_ab_mu EY],[1 2 3], 'x')
+        line([K K],[0 4],'Color','green','LineStyle','--')
+       
         line(X_IC_gauss,[1 1])
         line(X_a_IC_gauss,[2 2])
         line(Z_IC_gauss,[3 3])
-        limf = 6*var(X)/nt;
+
+        legend("estimateurs","K","Z","X_a","X")
+
+        limf = 3*var(X)/nt;
         xlim([X_mu*(1-limf) X_mu*(1+limf)])
         ylim([0 4])
         yticks(1:3)
+
         yticklabels({'X','X_a', 'Z (vc)'})
         title('Intervalles de confiance (sauf C)')
 
