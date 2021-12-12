@@ -76,9 +76,14 @@ for i = 2:(n+1)
     S_anti(:,i) = S_anti(:,i-1) + dS_anti;
 
     % variable de controle
-    dWt = normrnd(zeros(nt,1),sqrt(dt));
+    dWt_vc = normrnd(zeros(nt,1),sqrt(dt));
+    %scatter(dWt_vc,dWt)
+    dWt_vc = dWt_vc + dWt_vc ...
+              .*sign(dWt).*(sign(dWt_vc) - sign(dWt));
+    %scatter(dWt_vc,dWt)
+             
     dSi = VC(:,i-1).* ...
-          ( r*dt + sigma*sqrt(S(:,i-1)).*dWt );
+          ( r*dt + sigma*sqrt(S(:,i-1)).*dWt_vc );
     VC(:,i)      =    VC(:,i-1) + dSi;
 end
 

@@ -81,5 +81,18 @@ figure 6 et 6.5:
 E!=E <> utiliser EX au lieu de EY, variance ist in eine Richtung größer!
 Sie auch Grafik 6 wo Z am Ende einen Schwanz hat: Wenn sich X positiv von der Mitte entfernt, dann mit größerer Varianz als X_a nach unten!
 Nach der gleichen Rechnung ist K kein fairer Preis
-wenn man dS_anti l. 74 ändert, sodass X_a gleiche Varianz wie X hat, hat Z eine normalere Form. Allerdings ist K immer noch verzerrt.
+wenn man dS_anti l. 74 ändert, sodass X_a gleiche Varianz wie X hat, hat Z eine normalere Form. Allerdings ist K immer noch verzerrt. (Beweis oder mit Bildern?)
 Oder man nimmt X als um mean(X) normalverteilt an, und dreht X darum
+
+Variable de controle so programmiert, dass gleiche Varianz und gleiches Vorzeichen -> gleicher E und hoch korreliert:
+>> corr(X,X_vc)
+
+ans =
+
+    0.6361
+
+>> corr(dWt,dWt_vc)
+
+ans =
+
+    0.6364
