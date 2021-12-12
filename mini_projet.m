@@ -174,27 +174,46 @@ C_IC_boot =  [C_0_est + quantile(y,alpha/2) ...
 
 % E(Y) ~= E(X) ~= E(Z) =~ mean(X_a)
 
-EY = mean(X_vc); %ou X_a
-Y = X_vc;
-%Y = 2*EY - X_vc; % seulement pour X_a
+EY_vc = mean(X_vc);
+X_vc;
+
+p = corr(X, X_vc); 
+% optimum: lambda =~ corr(X,Y)*(Var(X)/Var(Y))^.5
+lambda = p*(var(X)/var(X_vc))^.5;
+Z_vc = X - lambda * (X_vc - EY_vc);
+
+na = nt;
+va = na/(na-1)*var(Z_vc);
+
+Z_IC_gauss = [EY_vc + sqrt(va/na)*norminv(alpha/2) ...
+              EY_vc + sqrt(va/na)*norminv(1-alpha/2)];
+
+% efficace ?
+fprintf(['\nLa correlation entre X et la variable '...
+        'de controle X_vc est: %0.5g\n'], p)
+
+
+% utilisant X_a
+
+EY_a = mean(X_a);
+Y = 2*EY_a - X_a; 
 
 p = corr(X, Y); 
 %bien entendu, les deux sont au-peu-pres 1 correles
 
 % optimum: lambda =~ corr(X,Y)*(Var(X)/Var(Y))^.5
 lambda = p*(var(X)/var(Y))^.5;
-Z = X - lambda * (Y - EY);
+Z_a = X - lambda * (Y - EY_a);
 
 na = nt;
-va = na/(na-1)*var(Z);
+va = na/(na-1)*var(Z_a);
 
-Z_IC_gauss = [EY + sqrt(va/na)*norminv(alpha/2) ...
-              EY + sqrt(va/na)*norminv(1-alpha/2)];
+Z_a_IC_gauss = [EY_a + sqrt(va/na)*norminv(alpha/2) ...
+                EY_a + sqrt(va/na)*norminv(1-alpha/2)];
 
 % efficace ?
 fprintf(['\nLa correlation entre X et la variable '...
-        'de controle est: %0.5g\n'], corr(X,X_vc))
-
+        'de controle X_a est: %0.5g\n'], corr(X,X_a))
 
 %% ~~~~~~~~~~~~ affichage des estimateurs ~~~~~~~~~~~~~~ %%
 
@@ -221,8 +240,12 @@ fprintf('L''intervalle de confiance de X (normal):\n');
 X_IC_gauss
 fprintf('La meme intervalle avec var. antithetiques:\n');
 X_a_IC_gauss
-fprintf('L''intervalle de confiance de Z (normal):\n');
+fprintf(['L''intervalle de confiance '...
+        'de Z avec VC (normal):\n']);
 Z_IC_gauss
+fprintf(['L''intervalle de confiance '...
+        'de Z avec X_a (normal):\n']);
+Z_a_IC_gauss
 fprintf('L''intervalle de confiance de C_0 (bootstrap):\n');
 C_IC_boot
 
@@ -239,13 +262,13 @@ nt_a = 1; % graphes de S affiches
 G = "g";
 P = input(['\n' ...
     'Pour afficher n''importe quel graphique, tapez ' ...
-    'son numero <1-7> ou [Enter]. \n' ...
+    'son numero <1-8> ou [Enter]. \n' ...
     'Pour quitter tapez plusieures fois [Enter]:\n'] );
 
 if isstring(P) || isempty(P)
     P = 1;
 else 
-    if ~ismember(P,1:7)
+    if ~ismember(P,1:8)
         P = 1;
     end
 end
@@ -343,11 +366,39 @@ while G~="q"
     case 6
         if n*nt > 5000*5000; G="q"; end
         
-        fprintf('< 6: Problematique: >\n')
-        fprintf(['L''IC de la variable de controle ' ...
-                 'ne semble pas etre exact.'])
+        fprintf('< 6: L''IC de la variable de controle')
+        fprintf('\n suivant pour Z a aide de VC')
         
-        plot(sort(Z))
+        plot(sort(Z_vc))
+        hold on 
+        plot(sort(X))
+        plot([1 na],[K K], '--k', 'LineWidth',1)
+        hold off
+        title("X vs variable de controle Z")
+        legend("Z","X","K")
+        
+        input('\n... 6.5 < scatter >');
+        
+        scatter(X,X_vc);
+        hold on; 
+        plot([min(X) max(X)],[min(X) max(X)],'-k');
+        plot(X_mu,EY_vc,'*r','LineWidth',2);
+        legend("X-X_{vc} en pair",...
+               "X=X_{vc}",...
+               "les moyennes"); 
+        hold off
+        xlabel("X")
+        ylabel("X_{vc}")
+        
+        P=P+1; input('\n');
+
+    case 7
+        if n*nt > 5000*5000; G="q"; end
+        
+        fprintf('< 7: L''IC de la variable de controle ')
+        fprintf('\n suivant pour Z a aide de X_a')
+        
+        plot(sort(Z_a))
         hold on 
         plot(sort(X))
         plot([1 na],[K K], '--k', 'LineWidth',1)
@@ -355,47 +406,50 @@ while G~="q"
         title("X vs variable de controle Z")
         legend("Z","X","Z")
         
-        input('\n... 6.5 < scatter >');
+        input('\n... 7.5 < scatter >');
         
         scatter(X,Y);
         hold on; 
         plot([min(X) max(X)],[min(X) max(X)],'-k');
-        plot(X_mu,EY,'*r','LineWidth',2);
+        plot(X_mu,EY_a,'*r','LineWidth',2);
         legend("X-Y en pair","X=Y","les moyennes"); 
         hold off
         xlabel("X")
         ylabel("Y avec laquelle la v.c. est construite")
         
         P=P+1; input('\n');
-    case 7
-        if n*nt > 5000*5000; G="q"; end
+    case 8
         
-         fprintf('< 7: ICs (normales) >')
-        plot([X_mu X_ab_mu EY],[1 2 3], 'x')
-        line([K K],[0 4],'Color','green','LineStyle','--')
+        fprintf('< 8: ICs (normales) >')
+        plot([X_mu X_ab_mu EY_vc EY_a],[1 2 3 4], 'x')
+        line([K K],[0 5],'Color','green','LineStyle','--')
        
         line(X_IC_gauss,[1 1])
         line(X_a_IC_gauss,[2 2])
         line(Z_IC_gauss,[3 3])
+        line(Z_a_IC_gauss,[4 4])
 
-        legend("estimateurs","K","Z","X_a","X")
+        legend("estimateurs","K","Z_a","Z_{vc}","X_a","X")
+        L1 = X_IC_gauss(2)-X_IC_gauss(1);
+        L2 = X_mu - K;
+        L = max(L1,L2);
+        limf = X_IC_gauss + 0.9*L*[-1 1];
+        %[X_mu*(1-limf) X_mu*(1+limf)]
+        xlim(limf)
+        ylim([0 5])
+        yticks(1:4)
 
-        limf = 3*var(X)/nt;
-        xlim([X_mu*(1-limf) X_mu*(1+limf)])
-        ylim([0 4])
-        yticks(1:3)
-
-        yticklabels({'X','X_a', 'Z (vc)'})
+        yticklabels({'X','X_a', 'Z (vc)', 'Z (a)'})
         title('Intervalles de confiance (sauf C)')
 
         P=P+1;
-    case 8
+    case 9
         if n*nt > 5000*5000; G="q"; end
         
         P=input(['\n ' ...
             'Pour afficher n''importe quel graphique, ' ...
-            'tapez son numero <1-7> \n']);
-        if ismember(P, 1:7)
+            'tapez son numero <1-8> \n']);
+        if ismember(P, 1:8)
             fprintf("Vous avez choisi: ")
         else
             G="q";
