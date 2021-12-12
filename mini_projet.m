@@ -127,7 +127,6 @@ C_0_est = mean(C_0);
 C_est_var = var(C_0)/nt; %/nt ?
 
 X_mu = mean(X);
-C_mu = mean(C);
 
 % C_N
 C_0_prim_est = mean(C_0_prim);
@@ -161,11 +160,11 @@ fprintf(['\nLa covariance entre X et la variable '...
 sims = 10^3;
 y = zeros(1, sims);
 for i = 1:sims
-    y(i) = mean(randsample(C,nt,true)) - C_mu;
+    y(i) = mean(randsample(C_0_est,nt,true)) - C_0_est;
 end
 
-C_IC_boot =  [C_mu + quantile(y,alpha/2) ...
-              C_mu + quantile(y,1-alpha/2) ];
+C_IC_boot =  [C_0_est + quantile(y,alpha/2) ...
+              C_0_est + quantile(y,1-alpha/2) ];
 
 
 %% ~~~~~~~~~~~~~~ variable de controle ~~~~~~~~~~~~~~~~~ %%
@@ -226,8 +225,9 @@ fprintf('La meme intervalle avec var. antithetiques:\n');
 X_a_IC_gauss
 fprintf('L''intervalle de confiance de Z (normal):\n');
 Z_IC_gauss
-fprintf('L''intervalle de confiance de C (bootstrap):\n');
+fprintf('L''intervalle de confiance de C_0 (bootstrap):\n');
 C_IC_boot
+
 
 %% ~~~~~~~~~~~~~~~~~~~~~ graphes ~~~~~~~~~~~~~~~~~~~~~~~ %%
 
@@ -236,17 +236,18 @@ nt_a = 1; % graphes de S affiches
 % 2-3: ecdf de C_inf et C_N; 
 % 4-5: boxplot des estimateurs
 % 6:   deux graphiques qui demontrent une problematique
+% 7:   intervalles de confiance
 
 G = "g";
 P = input(['\n' ...
     'Pour afficher n''importe quel graphique, tapez ' ...
-    'son numero <1-6> ou [Enter]. \n' ...
+    'son numero <1-7> ou [Enter]. \n' ...
     'Pour quitter tapez plusieures fois [Enter]:\n'] );
 
 if isstring(P) || isempty(P)
     P = 1;
 else 
-    if ~ismember(P,1:6)
+    if ~ismember(P,1:7)
         P = 1;
     end
 end
@@ -273,11 +274,13 @@ while G~="q"
                "les variables antithetiques",...
                "les variables de controle",...
                "Location","northwest");
+        
         if n*nt > 5000*5000; G="q"; end
         P=P+1; input('\n');
     
     case 2
         if n*nt > 5000*5000; G="q"; end
+        
         fprintf(['< 2: fonction de distribution ' ...
             'cumulative estime'  ...
             '\n C(T) pour X_{infinie} de C_infinie >\n'])
@@ -295,10 +298,12 @@ while G~="q"
         hold off
         legend("ecdf", "K", "P=50%", "cdf normal")
         title("ecdf X(T) pour X_{infinie}");
+        
         P=P+1; input('\n');
 
     case 3
         if n*nt > 5000*5000; G="q"; end
+        
         fprintf(['< 3: fonction de distribution ' ...
             'cumulative estime'  ...
             '\n C(T) pour X_{infinie} de C_N >\n'])
@@ -310,31 +315,38 @@ while G~="q"
         hold off
         legend("ecdf", "K", "P=50%")
         title("ecdf X(T) pour X_{N}");
+        
         P=P+1; input('\n');
 
     case 4
         if n*nt > 5000*5000; G="q"; end
+        
         fprintf(['< 4: boxplot de l''estimateur ' ...
                  'C_{infinie} >\n'])
         figure(1)
         boxplot( C_0 );
         title('boxplot de C_{infinie} a T')
         ylabel('C_T, valeurs actualisees')
+        
         P=P+1; input('\n');
 
     case 5
         if n*nt > 5000*5000; G="q"; end
+        
         fprintf('< 5: boxplot de l''estimateur C_{N} >\n\n')
         figure(1)
         boxplot ( C_0_prim );
         title('boxplot de C_{N} a T')
+        
         P=P+1; input('\n');
     
     case 6
         if n*nt > 5000*5000; G="q"; end
+        
         fprintf('< 6: Problematique: >\n')
         fprintf(['L''IC de la variable de controle ' ...
                  'ne semble pas etre exact.\n'])
+        
         plot(sort(Z))
         hold on 
         plot(sort(X))
@@ -343,25 +355,40 @@ while G~="q"
         title("X vs variable de controle Z")
         legend("Z","X","Z")
         
-        % Avantage: IC tres etroite
-        % Probleme: K est loin hors de ic, mais EY est dedans ?
-        % Peut-etre pcq outliers a cause de la variance(sqrt(S)) ?
         input('\n');
-        % explication: pour X grand Y est plus petit
+        
         scatter(X,Y);
-        hold on; plot([36 48],[36 48],'-k');
+        hold on; 
+        plot([36 48],[36 48],'-k');
         plot(X_mu,EY,'*r','LineWidth',2);
         legend("X-Y en pair","X=Y","les moyennes"); 
         hold off
         xlabel("X")
-        ylabel("Y, miroir de X_a a X\_a\_mu")
-        P=P+1;
+        ylabel("Y avec laquelle la v.c. est construite")
+        
+        P=P+1; input('\n');
     case 7
         if n*nt > 5000*5000; G="q"; end
+
+        plot([X_mu X_ab_mu EY],[1 2 3], 'x')
+        line(X_IC_gauss,[1 1])
+        line(X_a_IC_gauss,[2 2])
+        line(Z_IC_gauss,[3 3])
+        limf = 6*var(X)/nt;
+        xlim([X_mu*(1-limf) X_mu*(1+limf)])
+        ylim([0 4])
+        yticks(1:3)
+        yticklabels({'X','X_a', 'Z (vc)'})
+        title('Intervalles de confiance (sauf C)')
+
+        P=P+1;
+    case 8
+        if n*nt > 5000*5000; G="q"; end
+        
         P=input(['\n ' ...
             'Pour afficher n''importe quel graphique, ' ...
-            'tapez son numero <1-6> \n']);
-        if ismember(P, 1:6)
+            'tapez son numero <1-7> \n']);
+        if ismember(P, 1:7)
             fprintf("Vous avez choisi: ")
         else
             G="q";
