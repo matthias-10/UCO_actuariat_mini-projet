@@ -298,6 +298,7 @@ while G~="q"
         % pour comparison, si j'epargne pour le taux r:
         %plot([t0 T], [S0 S0*(1+r)^(T-t0)],"--k"); %obl.
         %1% fplot(obligation, [t0 T], "-k"); 
+        xlabel("t")
         legend("K, le prix d''exercice", ...
                "obligation (sans risque)", ...
                "les prix S_t des actions",...
@@ -355,6 +356,7 @@ while G~="q"
                  'C_{infinie} >'])
         figure(1)
         boxplot( C_0 );
+        xticks({})
         title('boxplot de C_{infinie} a T')
         ylabel('C_T, valeurs actualisees')
         
@@ -366,6 +368,7 @@ while G~="q"
         fprintf('< 5: boxplot de l''estimateur C_{N} >')
         figure(1)
         boxplot ( C_0_prim );
+        xticks({})
         title('boxplot de C_{N} a T')
         
         P=P+1; input('\n\n');
@@ -382,6 +385,7 @@ while G~="q"
         plot([1 na],[K K], '--k', 'LineWidth',1)
         hold off
         title("X vs variable de controle Z")
+        xlabel("nt")
         legend("Z","X","K")
         
         input('\n... 6.5 < scatter >');
@@ -411,7 +415,8 @@ while G~="q"
         plot([1 na],[K K], '--k', 'LineWidth',1)
         hold off
         title("X vs variable de controle Z")
-        legend("Z","X","Z")
+        xlabel("nt")
+        legend("Z","X","K")
         
         input('\n... 7.5 < scatter >');
         

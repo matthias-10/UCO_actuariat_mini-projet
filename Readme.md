@@ -96,3 +96,5 @@ ans =
 ans =
 
     0.6364
+
+X_a unterschätzt, das scheint mir aus den IC klar zu sein
