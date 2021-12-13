@@ -27,15 +27,20 @@ Je crois que j'ai rempli tous les points de la réunion, le 24 Nov [Matthias)
 
 
 ## QUESTIONS : 
-est ce que la méthode choisie est valide ? 
-quelle sens pour la matrice ? 
-est ce que les calculs sont bons ? 
-quel type de dashboard attendez vu sur excel ? 
-mieux utiliser X au lieu de C pour intervalle et variable de controle?
-Y ne dèpend pas de lambda?
-variable de contrôle pour C ou pour S?
-Calculation en double boucle dure 14/0.008 sec = 1700 fois (pour n=100, nt=1000) plus longtemps qu'en matrice <-> 3600/7.7 KiB RAM 
-Comment calculer variable de controle?
+
+* est ce que la méthode choisie est valide ? 
+* quelle sens pour la matrice ? 
+* est ce que les calculs sont bons ? 
+* quel type de dashboard attendez vu sur excel ? 
+* mieux utiliser X au lieu de C pour intervalle et variable de controle?
+* Y ne dèpend pas de lambda?
+* variable de contrôle pour C ou pour S?
+* Calculation en double boucle dure 14/0.008 sec = 1700 fois (pour n=100, nt=1000) plus longtemps qu'en matrice <-> 3600/7.7 KiB RAM 
+* Comment calculer variable de controle?
+
+
+*** 
+
 
 n= 1.000;
 nt = 100.000;
