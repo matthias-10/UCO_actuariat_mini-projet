@@ -19,7 +19,7 @@ n = 2^6;                % Nombre de intervalles
 T = 5;                  % Fin de la periode
 Nd = 8;                 % Nombre des sous-intervalles 
 
-nt = 100000;             % Nombre de trajectoires
+nt = 10000;             % Nombre de trajectoires
 
 alpha = 0.05;           % niveau au risque
 
@@ -305,11 +305,11 @@ while G~="q"
                "les variables de controle",...
                "Location","northwest");
         
-        if n*nt > 5000*5000; G="q"; end
+        if n*nt > 100*1000000; P=7; end
         P=P+1; input('\n\n');
     
     case 2
-        if n*nt > 5000*5000; G="q"; end
+        if n*nt > 100*1000000; G="q"; end
         
         fprintf(['< 2: fonction de distribution ' ...
             'cumulative estime'  ...
@@ -332,7 +332,7 @@ while G~="q"
         P=P+1; input('\n\n');
 
     case 3
-        if n*nt > 5000*5000; G="q"; end
+        if n*nt > 100*1000000; G="q"; end
         
         fprintf(['< 3: fonction de distribution ' ...
             'cumulative estime'  ...
@@ -349,7 +349,7 @@ while G~="q"
         P=P+1; input('\n\n');
 
     case 4
-        if n*nt > 5000*5000; G="q"; end
+        if n*nt > 100*1000000; G="q"; end
         
         fprintf(['< 4: boxplot de l''estimateur ' ...
                  'C_{infinie} >'])
@@ -361,7 +361,7 @@ while G~="q"
         P=P+1; input('\n\n');
 
     case 5
-        if n*nt > 5000*5000; G="q"; end
+        if n*nt > 100*1000000; G="q"; end
         
         fprintf('< 5: boxplot de l''estimateur C_{N} >')
         figure(1)
@@ -371,7 +371,7 @@ while G~="q"
         P=P+1; input('\n\n');
     
     case 6
-        if n*nt > 5000*5000; G="q"; end
+        if n*nt > 100*1000000; G="q"; end
         
         fprintf('< 6: L''IC de la variable de controle')
         fprintf('\n suivant pour Z a aide de VC')
@@ -400,7 +400,7 @@ while G~="q"
         P=P+1; input('\n');
 
     case 7
-        if n*nt > 5000*5000; G="q"; end
+        if n*nt > 100*1000000; G="q"; end
         
         fprintf('< 7: L''IC de la variable de controle ')
         fprintf('\n suivant pour Z a aide de X_a')
@@ -449,7 +449,7 @@ while G~="q"
 
         P=P+1;
     case 9
-        if n*nt > 5000*5000; G="q"; end
+        if n*nt > 100*1000000; G="q"; end
         
         P=input(['\n ' ...
             'Pour afficher n''importe quel graphique, ' ...
@@ -464,7 +464,7 @@ while G~="q"
     end
 end
 
-if n*nt > 5000*5000
+if n*nt > 100*1000000
     warning("Donnees trop grandes pour affichage"); 
 end
 
