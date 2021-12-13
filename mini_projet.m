@@ -15,11 +15,11 @@ r = 0.05;               % Taux d'interet sous risque neutre
 sigma = 0.01;           % Variance partie fixe
 
 t0 = 0;                 % Debut de la periode
-n = 2^9;                % Nombre de intervalles
+n = 2^6;                % Nombre de intervalles
 T = 5;                  % Fin de la periode
 Nd = 8;                 % Nombre des sous-intervalles 
 
-nt = 10000;             % Nombre de trajectoires
+nt = 100000;             % Nombre de trajectoires
 
 alpha = 0.05;           % niveau au risque
 
@@ -61,21 +61,27 @@ S(:, 1) = S0;
 S_anti = S;
 VC = S;
 for i = 2:(n+1)
+
+    % ~~~~~~~~~~~~~~ Simulation des prix ~~~~~~~~~~~~~~~~ %
+    
     dWt = normrnd(zeros(nt,1),sqrt(dt));
     dSi = S(:,i-1).* ...
           ( r*dt + sigma*sqrt(S(:,i-1)).*dWt );
     S(:,i) = S(:,i-1) + dSi;
-    
-    % variable antithetique:
+    S(:,i) = S(:,i) .* (S(:,i) >= 0);    
+
+    % ~~~~~~~~~~~~~ variable antithetique ~~~~~~~~~~~~~~~ %
 
     dWt_a = -1*dWt;
+    %dS_anti = S_anti(:,i-1).* ...
+    %         ( r*dt + sigma*sqrt(S_anti(:,i-1)).*dWt_a );
+    % sans biais (?):    
     dS_anti = S_anti(:,i-1).* ...
-             ( r*dt + sigma*sqrt(S_anti(:,i-1)).*dWt_a );
-    %dS_anti = S(:,i-1).* ...
-    %         ( r*dt + sigma*sqrt(S(:,i-1)).*dWt_a );
+             ( r*dt + sigma*sqrt(S(:,i-1)).*dWt_a );
     S_anti(:,i) = S_anti(:,i-1) + dS_anti;
+    S_anti(:,i) = S_anti(:,i) .* (S_anti(:,i) >= 0);
 
-    % variable de controle:
+    % ~~~~~~~~~~~~~ variable de controle ~~~~~~~~~~~~~~~~ %
 
     dWt_vc = normrnd(zeros(nt,1),sqrt(dt));
     dWt_vc = dWt_vc + dWt_vc ...
@@ -83,6 +89,7 @@ for i = 2:(n+1)
     dSi = VC(:,i-1).* ...
           ( r*dt + sigma*sqrt(S(:,i-1)).*dWt_vc );
     VC(:,i)      =    VC(:,i-1) + dSi;
+    VC(:,i) = VC(:,i) .* (VC(:,i) >= 0);
 end
 
 %% ~~~~~~~~~~~~~~ C_inf: calcul avec X_T ~~~~~~~~~~~~~~~ %%
@@ -196,7 +203,7 @@ fprintf(['\nLa correlation entre X et la variable '...
 % utilisant X_a
 
 EY_a = mean(X_a);
-Y = 2*EY_a - X_a; 
+Y = 2*EY_a - X_a; % X_mu + EY_a - X_a ???
 
 p = corr(X, Y); 
 %bien entendu, les deux sont au-peu-pres 1 correles
@@ -231,7 +238,7 @@ fprintf('Son ecart type = %0.5g\n', sqrt(C_est_var));
 
 
 fprintf(['L''estimateur du C_N a t0, avec ' ...
-    '%d sous-intervalles = \n%0.5g\n'], ...
+    '%d sous-intervalles = %0.5g\n'], ...
     Nd, C_0_prim_est);
 fprintf('Son ecart type = %0.5g\n', sqrt(C_prim_est_var));
 
@@ -432,9 +439,7 @@ while G~="q"
         legend("estimateurs","K","Z_a","Z_{vc}","X_a","X")
         L1 = X_IC_gauss(2)-X_IC_gauss(1);
         L2 = X_mu - K;
-        L = max(L1,L2);
-        limf = X_IC_gauss + 0.9*L*[-1 1];
-        %[X_mu*(1-limf) X_mu*(1+limf)]
+        limf = X_IC_gauss + max(L1,L2)*[-1 1];
         xlim(limf)
         ylim([0 5])
         yticks(1:4)

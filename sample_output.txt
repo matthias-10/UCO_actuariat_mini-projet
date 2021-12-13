@@ -1,0 +1,97 @@
+>> mini_projet
+
+ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ 
+La programme a demarre a 12-Dec-2021 18:55:25 
+40 -> Prix initial du sous jacent 
+51.051 -> Prix univers risque neutre a T
+45.301 -> Prix d'exercice de l'option 
+calculation en cours . . .
+
+La covariance entre X et la variable antithetique est: 16.157
+
+La correlation entre X et la variable de controle X_vc est: 0.63515
+
+La correlation entre X et la variable de controle X_a est: -0.97445
+
+10000 trajectoires simules
+Fini en 0.64767 secondes
+
+ ~ Les estimateurs Monte-Carlo: ~ 
+L'estimateur du C_inf a t0 = 1.3005
+Son ecart type = 0.020079
+L'estimateur du C_N a t0, avec 8 sous-intervalles = 1.7063
+Son ecart type = 0.023955
+
+ ~ Des intervalles de Confiance ~ 
+L'intervalle de confiance de X (normal):
+
+X_IC_gauss =
+
+   45.3939   45.5506
+
+La meme intervalle avec var. antithetiques:
+
+X_a_IC_gauss =
+
+   45.3901   45.5012
+
+L'intervalle de confiance de Z avec VC (normal):
+
+Z_IC_gauss =
+
+   45.4009   45.5219
+
+L'intervalle de confiance de Z avec X_a (normal):
+
+Z_a_IC_gauss =
+
+   45.4014   45.4366
+
+L'intervalle de confiance de C_0 (bootstrap):
+
+C_IC_boot =
+
+    1.3005    1.3005
+
+
+Pour afficher n'importe quel graphique, tapez son numero <1-8> ou [Enter]. 
+Pour quitter tapez plusieures fois [Enter]:
+
+[Enter] pour continuer
+< 1: quelques premiers graphes de S >
+
+
+[Enter] pour continuer
+< 2: fonction de distribution cumulative estime
+ C(T) pour X_{infinie} de C_infinie >
+
+
+[Enter] pour continuer
+< 3: fonction de distribution cumulative estime
+ C(T) pour X_{infinie} de C_N >
+
+
+[Enter] pour continuer
+< 4: boxplot de l'estimateur C_{infinie} >
+
+
+[Enter] pour continuer
+< 5: boxplot de l'estimateur C_{N} >
+
+
+[Enter] pour continuer
+< 6: L'IC de la variable de controle
+ suivant pour Z a aide de VC
+... 6.5 < scatter >
+
+
+[Enter] pour continuer
+< 7: L'IC de la variable de controle 
+ suivant pour Z a aide de X_a
+... 7.5 < scatter >
+
+
+[Enter] pour continuer
+< 8: ICs (normales) >[Enter] pour continuer
+
+ Pour afficher n'importe quel graphique, tapez son numero <1-8> 
