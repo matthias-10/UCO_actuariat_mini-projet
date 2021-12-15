@@ -27,14 +27,20 @@ Je crois que j'ai rempli tous les points de la réunion, le 24 Nov [Matthias)
 
 
 ## QUESTIONS : 
-est ce que la méthode choisie est valide ? 
-quelle sens pour la matrice ? 
-est ce que les calculs sont bons ? 
-quel type de dashboard attendez vu sur excel ? 
-mieux utiliser X au lieu de C pour intervalle et variable de controle?
-Y ne dèpend pas de lambda?
-variable de contrôle pour C ou pour S?
-Calculation en double boucle dure 14/0.008 sec = 1700 fois (pour n=100, nt=1000) plus longtemps qu'en matrice <-> 3600/7.7 KiB RAM 
+
+* est ce que la méthode choisie est valide ? 
+* quelle sens pour la matrice ? 
+* est ce que les calculs sont bons ? 
+* quel type de dashboard attendez vu sur excel ? 
+* mieux utiliser X au lieu de C pour intervalle et variable de controle?
+* Y ne dèpend pas de lambda?
+* variable de contrôle pour C ou pour S?
+* Calculation en double boucle dure 14/0.008 sec = 1700 fois (pour n=100, nt=1000) plus longtemps qu'en matrice <-> 3600/7.7 KiB RAM 
+* Comment calculer variable de controle?
+
+
+*** 
+
 
 n= 1.000;
 nt = 100.000;
@@ -67,7 +73,8 @@ IC_gauss wurde gemacht da TCL (siehe auch Bild 2), bootstrap bei C weil keine no
 % choisir N n/a a partie de G, prendre le prix dernier)
 
 
-Vorteil variable antithetique: 2 Werte pro boucle pas a pas
+Vorteil variable antithetique: 2 Werte pro boucle pas a pas,
+außerdem vergleich: "On gagne si sqrt(1+p)<1"" <-> aus der Perspektive bringt das nichts
 
 
 figure 6 et 6.5: 
@@ -79,4 +86,28 @@ figure 6 et 6.5:
 E!=E <> utiliser EX au lieu de EY, variance ist in eine Richtung größer!
 Sie auch Grafik 6 wo Z am Ende einen Schwanz hat: Wenn sich X positiv von der Mitte entfernt, dann mit größerer Varianz als X_a nach unten!
 Nach der gleichen Rechnung ist K kein fairer Preis
-wenn man dS_anti l. 74 ändert, sodass X_a gleiche Varianz wie X hat, hat Z eine normalere Form. Allerdings ist K immer noch verzerrt.
+wenn man dS_anti l. 74 ändert, sodass X_a gleiche Varianz wie X hat, hat Z eine normalere Form. Allerdings ist K immer noch verzerrt. (Beweis oder mit Bildern?)
+Oder man nimmt X als um mean(X) normalverteilt an, und dreht X darum
+
+Variable de controle so programmiert, dass gleiche Varianz und gleiches Vorzeichen -> gleicher E und hoch korreliert:
+>> corr(X,X_vc)
+
+ans =
+
+    0.6361
+
+>> corr(dWt,dWt_vc)
+
+ans =
+
+    0.6364
+
+X_a unterschätzt, das scheint mir aus den IC klar zu sein
+
+Methode für variable de controle:
+auch dSvc mit dSi korrelieren lassen (also zum Beispiel als Mittel), oder dWi mit dWvc korrelieren lassen (wieder als Mittel, oder als gewichtetes Mittel) -> was hindert mich, das Mittel zum Beispiel 0.99 zu 0.01 zu gewichten? Das würde ja die Varianz gegen null gehen lassen, und der resultierende Schätzwert wäre ~X_mu
+european option als kontrollvariable
+geometric asian control variable (Zhang S.28)
+Preis der Aktie selber als control variable
+
+=> K falsch wegen log-normal Distribution! Sehr ähnlich zu normal aber
