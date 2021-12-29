@@ -111,3 +111,31 @@ geometric asian control variable (Zhang S.28)
 Preis der Aktie selber als control variable
 
 => K falsch wegen log-normal Distribution! Sehr ähnlich zu normal aber
+
+Y muss unabhängig sein
+EY muss bekannt sein
+Y muss korreliert sein
+EZ = EX muss bekannt sein
+-> mvt. Brownian, 
+-> prix option européenne (based on a different formula to obtain the price of the underlying, 
+-> f(mvt. Brownian) [exp, sign]
+-> la variable antithétique (dans l'autre sens)
+
+Without bootstrap, negative C in the IC are possible
+# Excel Dashboard
+
+### Anti-Features
+
+* not all control variables
+* slower and not as many calculation possible, due to limits of VBA, notably the restriction on memory and the inability to calculate vectors
+* due to the aforementioned numerical disadvantages, the use of e.g. the variable antithétique doesn't make sense
+
+### Features
+
+* sheet is protected, area is protected
+* scrollable
+* conditional formatting on IC and temps
+* Data validation
+* named references
+* old data and graphics are automatically deleted and newly rendered, no matter the size of the underlying data
+

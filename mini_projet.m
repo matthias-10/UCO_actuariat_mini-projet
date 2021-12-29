@@ -35,7 +35,7 @@ starttime = datetime('now');
 fprintf('\n ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ \n');
 fprintf('La programme a demarre a %s \n', starttime);
 
-% K basé sur le prix moyen d'une obligation sans risque
+% K base sur le prix moyen d'une obligation sans risque
 syms func(x) 
 obligation(x) = S0*(1+r)^x;
 K = double( int(obligation,0,T)/T);
@@ -95,8 +95,7 @@ for i = 1:n
     % variable de controle -- mouv. brown de meme signe
 
     dWt_vc = normrnd(zeros(nt,1),sqrt(dt));
-    dWt_vc = dWt_vc + dWt_vc ...
-              .*sign(dWt).*(sign(dWt_vc) - sign(dWt));
+    dWt_vc = dWt_vc + dWt_vc .*sign(dWt).*(sign(dWt_vc) - sign(dWt));
     dSi = VC(:,i-1).* ...
           ( r*dt + sigma*sqrt(S(:,i-1)).*dWt_vc );
     VC(:,i)      =    VC(:,i-1) + dSi;
