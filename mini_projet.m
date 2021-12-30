@@ -32,10 +32,8 @@ if Nd > n/2-1
     fprintf('Il fallait Nd << n')
 end
 
-tic
-starttime = datetime('now');
 fprintf('\n ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ \n');
-fprintf('La programme a demarre a %s \n', starttime);
+fprintf('La programme a demarre a %s \n', datetime('now'));
 
 % K base sur le prix moyen d'une obligation sans risque
 syms func(x) 
@@ -44,7 +42,8 @@ K = double( int(obligation,0,T)/T);
 bonds_T = obligation(T);
 
 fprintf('%d -> Prix initial du sous jacent \n', S0)
-fprintf('%0.5g -> Prix univers risque neutre a T\n',bonds_T)
+fprintf(['%0.5g -> Prix univers risque neutre'...
+        'et continue a T\n'], bonds_T)
 fprintf('%0.5g -> Prix d''exercice de l''option \n', K);
 fprintf('calculation en cours . . .\n')
 
@@ -199,6 +198,7 @@ disp(strcat(...
 %% ~~~~~~~~~~~~~ variable de controle 1 ~~~~~~~~~~~~~~~~ %%
 
 % Variable de controle - aire sous un mouvement brownien
+% voir VC2 et VBA
 
 
 
@@ -277,15 +277,115 @@ disp(strcat(...
 
 %% ~~~~~~~~~~~~~ variable de controle 3 ~~~~~~~~~~~~~~~~ %%
 
-% mouvement brownien de la meme signe
+% mouvement pareil au prix des actions decale
+% ~~~~~~~~~~~~~~~~ Calculer lambda ~~~~~~~~~~~~~~~~~~~~~~ %
+% S = S0*ones(n+1,1);
+% VC = S0*ones(n+1,1);
+% 
+% i = 2;
+% dW_t = normrnd(0, sqrt(dt), 1, 1);
+% S(i) = S(i-1) .*(1 +r*dt + sigma*sqrt(abs(S(i-1))).*dW_t );
+% VC(i) = S0 * (1+ r*dt);
+% 
+% for i = 3:(n+1)
+%     j = mod(i,2);
+%     dW_t = normrnd(0, sqrt(dt), 1, 1);
+%     S(i) = S(i-1) .*(1 +r*dt + sigma*sqrt(abs(S(i-1))).*dW_t );
+% 
+%     VC(i) = VC(i-1) .*(1 +r*dt + dW_t/10 );
+%     VC(i) = VC(i);
+% end
+% plot(S)
+% hold on
+% plot(VC)
+% hold off
 
-%dWt_vc = normrnd(zeros(nt,1),sqrt(dt));
-%dWt_vc = dWt_vc + dWt_vc .*sign(dWt).*(sign(dWt_vc) - sign(dWt));
-%dSi = VC(:,i-1).* ...
-%      ( r*dt + sigma*sqrt(S(:,i-1)).*dWt_vc );
-%VC(:,i)      =    VC(:,i-1) + dSi;
-%VC(:,i) = VC(:,i) .* (VC(:,i) >= 0);
+S = S0 * ones(nlambda,1);
+VC = S0 * ones(nlambda, 1);
 
+X = S/2;
+for i = 2:(n+1)
+    %j = mod(i,2);
+    dW_t = normrnd(0, sqrt(dt), nlambda, 1);
+    S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
+    X = X+S;
+
+    %VC(:,3) = VC(:,j+1) .*(1 +r*dt + dW_t/10 );
+    %VC(:,~j+1) = VC(:,3);
+    VC = VC .* (1 +r*dt + dW_t/10 );
+end
+X = (X - S/2)/n;
+
+C = exp(-r*T) * max(X-K,0);
+A = cov(C, VC);
+lambda = A(1,2)/A(2,2); 
+
+
+% E(VC)
+E_VC = S0;
+for i = 2:(n+1)
+    E_VC = E_VC * (1 + r*dt);
+end
+
+% pour comparaison
+double(bonds_T);
+
+% en utilisant les est. empiriques
+% comparer avec les moments analytiques? -> voir pdf/VBA
+
+
+% ~~~~~~~~~~~~~~~~~~~~~ simuler ~~~~~~~~~~~~~~~~~~~~~~~~~ %
+
+tic;
+S = S0 * ones(nt,1);
+VC = S0 * ones(nt, 1);
+
+X = S/2;
+for i = 2:(n+1)
+    %j = mod(i,2);
+    dW_t = normrnd(0, sqrt(dt), nt, 1);
+    S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
+    X = X+S;
+
+    %VC(:,3) = VC(:,j+1) .*(1 +r*dt + dW_t/10 );
+    %VC(:,~j+1) = VC(:,3);
+    VC = VC .* (1 +r*dt + dW_t/10 );
+end
+X = (X - S/2)/n;
+
+
+C = exp(-r*T) * max(X-K,0);
+
+Z = C - lambda * (VC - E_VC);
+
+C_3_est = mean(Z);
+C_3_est_var = var(Z)/nt;
+
+C_3_IC_inf = C_3_est + sqrt(C_3_est_var)*norminv(alpha/2);
+C_3_IC_sup = C_3_est + sqrt(C_3_est_var)*norminv(1-alpha/2);
+L = C_3_IC_sup - C_3_IC_inf;
+
+tps = toc;
+
+% fonction d'affichage 
+
+fprintf('\n')
+fprintf('Variable de controle - prix decales: \n');
+
+disp(strcat(...
+{' C = '},sprintf('%05.3f',C_3_est),...
+{' IC = ['},sprintf('%05.3f',C_3_IC_inf),...
+{' , '},sprintf('%05.3f',C_3_IC_sup),...
+{'] '},...
+{' largeur = '},sprintf('%05.3f',L),...
+{' t = '},sprintf('%05.3f',tps),...
+{' eff = '},sprintf('%05.3f',L * sqrt(tps))));
+
+p = corr(X, VC); 
+% optimum: lambda =~ corr(X,Y)*(Var(X)/Var(Y))^.5
+% efficace ?
+fprintf(['La correlation entre X et la variable '...
+        'de controle est: %0.5g\n'], p)
 
 %% ~~~~~~~~~~~~~ variable de controle 4 ~~~~~~~~~~~~~~~~ %%
 
@@ -301,6 +401,16 @@ disp(strcat(...
 % 4-5: boxplot des estimateurs
 % 6:   deux graphiques qui demontrent une problematique
 % 7:   intervalles de confiance
+
+% simuler n_aff graphes pour affichage
+n_aff = 10;
+S_aff = S0*ones(n_aff, n+1);
+for i = 2:(n+1)
+    dWt = normrnd(zeros(n_aff, 1),sqrt(dt));
+    S_aff(:,i) = S_aff(:,i-1).*...
+                (1 + r*dt+sigma*sqrt(S_aff(:,i-1)).*dWt);
+end
+
 
 G = "g";
 %G = "q" %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -328,10 +438,9 @@ while G~="q"
         hold on
         plot(t, obligation(t))
         plot(t, S_aff,'b')
-        plot(t, S_anti_aff, 'r:')
-        plot(t, VC_aff(1:nt_a,:),'g--')
+        %plot(t, S_anti_aff, 'r:')
+        %plot(t, VC_aff(1:nt_a,:),'g--')
         % probleme si nt < nt_a
-        plot([0 T],[K K], '--k', 'LineWidth',2)
         hold off
         % pour comparison, si j'epargne pour le taux r:
         %plot([0 T], [S0 S0*(1+r)^T],"--k"); %obl.
@@ -340,8 +449,6 @@ while G~="q"
         legend("K, le prix d''exercice", ...
                "obligation (sans risque)", ...
                "les prix S_t des actions",...
-               "les variables antithetiques",...
-               "les variables de controle",...
                "Location","northwest");
         
         if n*nt > 100*1000000; P=7; end
@@ -470,16 +577,17 @@ while G~="q"
         P=P+1; input('\n');
     case 8
         
-        w = 3; % nombre des IC affichees
+        w = 4; % nombre des IC affichees
         %fprintf('< 8: ICs (normales) >')
-        plot([C_est Ca_est C_2_est], 1:w, 'x')
+        plot([C_est Ca_est C_2_est C_3_est], 1:w, 'x')
         %line([K K],[0 5],'Color','green','LineStyle','--')
        
         line([C_IC_inf C_IC_sup],[1 1])
         line([Ca_IC_inf Ca_IC_sup],[2 2])
         line([C_2_IC_inf C_2_IC_sup],[3 3])
+        line([C_3_IC_inf C_3_IC_sup],[4 4])
         
-        legend("estimateurs",'C','C_a','C_{VC2}')
+        legend("estimateurs",'C','C_a','C_{VC2}','C_{VC3}')
         L1 = C_IC_sup - C_IC_inf;
         L2 = C_est - K;
         limf = [C_IC_inf C_IC_sup] + max(L1,L2)*[-1 1];
@@ -487,7 +595,7 @@ while G~="q"
         ylim([0 w+1])
         yticks(1:w)
 
-        yticklabels({'C','C_a','C_{VC2}'})
+        yticklabels({'C','C_a','C_{VC2}','C_{VC3}'})
         %title('Intervalles de confiance (sauf C)')
         
         %P=P+1;

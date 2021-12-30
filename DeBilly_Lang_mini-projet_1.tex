@@ -20,12 +20,7 @@
 \usepackage{mathtools, amssymb}
 \usepackage[usenames,dvipsnames]{color}
 
-% \begin{equation}
-% \begin{split}
-%     \dbx & =\dbx[3cm] \\
-%     & =\dbx
-% \end{split}
-% \end{equation}
+\allowdisplaybreaks
 
 \definecolor{MyDarkGreen}{rgb}{0.0,0.4,0.0}
 \lstloadlanguages{Matlab}
@@ -70,7 +65,7 @@
 
 \title{Mini projet 1: Calcul du prix d'une option asiatique}
 \author{Valentin DE CRESPIN DE BILLY \\ Matthias LANG}
-\date{30.11.2021}
+\date{09.01.2022}
 
 \linespread{1.5} 
 
@@ -161,10 +156,12 @@ méthode de trapezes
 
 calculer pay-off et actualiser
 
-\subsection{X_prim}
-X_prim will give a different estimator.
-This could be shown analytically, as even for sigma = 0 the values will be different.
-X_inf uses the method of trapezes, giving the area under the whole graph, whereas X_prim averages some values starting from T/Nd to T.
+\subsection{4) $X_T$ remplacé par $X'_T$ ou$X_N$}
+$X_N$ will give a different estimator.
+This could be shown analytically, as even for $\sigma = 0$ the values will be different.
+$X_{inf}$ uses the method of trapezes, giving the area under the whole graph, whereas $X_N$ averages some values starting from $T/Nd$ to $T$.
+
+true values: $C_N \neq C$.
 
 \subsection{Réduction de la variance du éstimateur}
 
@@ -203,22 +200,23 @@ $Z_i = X_i - \lambda(Y_i - E(Y_i))$ avec $\lambda = sigma_X/sigma_Y * \rho$.
 
 \subsubsection{Variable de contrôle 1}
 
-La première variable est construite avec des bruits blancs, plus ou moins la même manière que le prix d'action.
+La première variable est construite avec des bruits blancs, plus ou moins la même manière que le prix d'exercice d'avant.
 Problematique: Les X et Y ne sont pas independant en utilisant le meme processus?
-Non overlapping increments Wt-Ws and Wv-Wu for any 0=s<t=>u<v are independent of each other.
 On ajoute $S_0$ pour que les deux puissent être comparées.
 $$X_i = S_0 + sum_{i=1}^{n} W_{t_i}$$
 
 C'est facile de démontrer l'ésperance:
-$$\mathbb{E}[X_i]=\mathbb{E}[S_0 + sum_{i=1}^{n} W_{t_i}] = S_0$$
+$$\mathbb{E}[X_i]=\mathbb{E}[S_0 + \sum_{i=1}^{n} W_{t_i}] = S_0$$
 
+%Non overlapping increments Wt-Ws and Wv-Wu for any 0=s<t=>u<v are independent of each other.
+Deux temporaires $[t, s]$ et $[v, u]$, sans chevauche ($[t, s] \wedge [v, u] = \emptyset$) ont valeurs de $W$ qui sont indépendant.
 La variance, sachant que $\mathbb{E}[W_1*W_2] =\mathbb{E}[W_{t_1}]*\mathbb{E}[W_{t_2}] =0$ et $Var(W_{t_1}) = t_1$, donc  $cov(W_{t_1}, W_{t_2}) = t_1$:
 \begin{align*}
 var(X_i)
-&= var(S_0 + sum_{i=1}^{n} W_{t_i}) \\
-&= var(sum_{i=1}^{n} W_{t_i}) \\
-&= \mathbb{E}[(sum_{i=1}^{n} W_{t_i})^2] \\
-&= var(sum_{i=1}^{n} W_{t_i}) \\
+&= var(S_0 + \sum_{i=1}^{n} W_{t_i}) \\
+&= var(\sum_{i=1}^{n} W_{t_i}) \\
+&= \mathbb{E}[(\sum_{i=1}^{n} W_{t_i})^2] \\
+&= var(\sum_{i=1}^{n} W_{t_i}) \\
 &= \sum_{i=1}^n cov(W_{t_i}, W_{t_i}) \\
 &= \sum_{i=1}^n \sum_{j=1}^n cov(W_{t_i}, W_{t_i}) \\
 &= \sum_{i=1}^n \sum_{j=1}^i cov(W_{t_i}, W_{t_j}) + \sum_{i=1}^{n-1} \sum_{j=i+1}^n cov(W_{t_i}, W_{t_j}) \\
@@ -246,6 +244,42 @@ et, le plus important, $Z_i$ et $\lambda$ seront indépendant de l'autre.
 
 \subsubsection{Variable de contrôle 3}
 En surplus, ces variables ne sont réalisées qu'en matlab.
+
+Pour la troisième variable de contrôle on fait pareil que la deuxième, et on simule un prix d'une action décalée.
+Mais ici nous prenons en compte le taux d'interêt. Ça ne veut nécessairement dire le taux d'interêt, qui peut-être ne soit pas connu, mais le taux d'actualization.
+Avec ces trajectoires simulées on garde les dernier valeurs à temps $T$.
+
+Les trajetoires seront simulées ensuite:
+
+
+\begin{align*}
+&\text{soit connu } S_0 \text{, et soit } dS_0 = S_0* r*dt  \\
+&\text{for}~~ i~=~1:n \\
+&~~~ dS_i = S_{i-1}(r*dt + \frac{dW_{i}}{10}) \\
+&~~~ S_i  = S_{i-1} + dS_i
+\end{align*}
+
+Cette algorithme peut être également exprimée comme somme:
+$$S_i = S_0 + \sum_0^i dS_i$$
+En espérance:
+\begin{align*}
+\mathbb{E}[S_t] = 
+\mathbb{E}[S_0 + \sum_0^t dS_i] =  \\
+&\mathbb{E}[S_0 + S_0*r*dt +\sum_1^t dS_i] = \\ 
+&= S_0*(1+rdt) + \sum_1^t \mathbb{E}[dS_i] = \\
+&= S_0*(1+rdt) + \sum_1^t \mathbb{E}[S_{i-1}(r*dt + 0.1dW_{i})] = \\
+&= S_0*(1+rdt) + \sum_1^t \mathbb{E}[S_{i-1}]*\mathbb{E}[r*dt + 0.1dW_{i}] = \\
+&= S_0*(1+rdt) + \sum_1^t \mathbb{E}[S_{i-1}]*\mathbb{E}[r*dt] + 
+                 0.1\mathbb{E}[dW_{i}] = \\
+&= S_0*(1+rdt) + \sum_1^t \mathbb{E}[S_{i-1}]*\mathbb{E}[r*dt] = \\
+&= S_0*(1+rdt) + \sum_0^{t-1} \mathbb{E}[S_{i}]*r*dt \\
+&= S_0 + \sum_1^t \mathbb{E}[S_{i-1}]*r*dt
+\end{align*}
+
+Cela va donner au-peu-près la valeur d'une obligation à valeur faciale de $S_0$ et coupons au taux $r$ 
+($\mathbb{E}[S_{T}] \approx S_0*(1+r)^T$), 
+mais son espérance peut être calculée pas à pas:
+$$\mathbb{E}[S_i | \mathbb{F}_{i-1}] = S_0*(1+rdt) + \sum_1^i S_{i-1}*r*dt $$
 
 C'est pratique de remplacer la variance par sa contrepartie empirique. 
 
@@ -312,11 +346,13 @@ Toutes les fiches se trouvent dans le repository en ligne:
   \end{center}
 \end{figure}
 
-
+\clearpage
 \section{Code Matlab}
+
 \lstinputlisting{mini_projet.m}
 
 \section{Code VBA}
+
 \lstinputlisting[
     breaklines=true,
     tabsize=3,
@@ -324,10 +360,10 @@ Toutes les fiches se trouvent dans le repository en ligne:
     extendedchars=\true,
     language={[Visual]Basic},
     frame=single,
-    framesep=3pt,%expand outward.
-    framerule=0.4pt,%expand outward.
-    xleftmargin=3.4pt,%make the frame fits in the text area. 
-    xrightmargin=3.4pt,%make the frame fits in the text area.
+    framesep=3pt,         % expand outward.
+    framerule=0.4pt,      % expand outward.
+    xleftmargin=3.4pt,    % make the frame fit in the text area. 
+    xrightmargin=3.4pt,   % make the frame fit in the text area.
     literate={$}{{\$}}1]{VBA_script.txt}
 
 
