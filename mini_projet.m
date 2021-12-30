@@ -215,7 +215,9 @@ for i = 2:(n+1)
     dW_t = normrnd(0, sqrt(dt), nlambda, 1);
     S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
     X = X+S;
-    VC = VC + dW_t; % succesion des petits accroissements du brownien => VC et S sont correles
+    VC = VC + dW_t; 
+    % succesion des petits accroissements du brownien 
+    % => VC et S sont correles
 end
 X = (X - S/2)/n;
 
@@ -467,7 +469,7 @@ while G~="q"
         hold on 
         plot([K K],[0 1], 'k')
         plot([min(X) max(X)], [.5 .5],':b')
-        x_ax = [min(X):.1:max(X)]; 
+        x_ax = min(X):.1:max(X); 
         % probleme si max-min < .1
         nor = normcdf(x_ax,X_mu,sqrt(v));
         plot(x_ax,nor,':r')
