@@ -38,7 +38,7 @@ dt = T / n
 
 Dim tps_debut, tps_passe As Double
 Dim n_aff As Integer
-n_aff = 10 'nombre des trajectoires affichées dans le graphique
+n_aff = 10 'nombre des trajectoires affichees dans le graphique
 
 ' premier cellule de la table de trajectoires ~ t0
 Dim Srow, Scol As Integer

@@ -62,7 +62,7 @@ VC_2 = S; % option europeenne
 VC_3 = S; % option asiatique geometrique
 VC_4 = S; % prix de l'action
 
-% une action est sauvegardée pour l'affichage
+% une action est sauvegardee pour l'affichage
 S_aff = ones(1,n+1)*S0;
 S_a_aff = S_aff; VC_1_aff = S_aff; VC_2_aff = S_aff;
 VC_3_aff = S_aff; VC_4_aff = S_aff; VC_5_aff = S_aff;
@@ -155,7 +155,7 @@ X_prim_mu = mean(X_prim);
 
 v = nt/(nt-1)*var(X); % variance d'echantillonnage
 
-%%% variable supossée normale
+%%% variable supossee normale
 X_IC_gauss = [X_mu + sqrt(v/nt)*norminv(alpha/2) ...
               X_mu + sqrt(v/nt)*norminv(1-alpha/2) ];
 

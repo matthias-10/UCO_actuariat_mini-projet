@@ -202,15 +202,15 @@ $$X_i = S_0 + sum_{i=1}^{n} W_{t_i}$$
 C'est facile de démontrer l'ésperance:
 $$\mathbb{E}[X_i]=\mathbb{E}[S_0 + sum_{i=1}^{n} W_{t_i}] = S_0$$
 
-La variance, sachant que $\mathbb{E}[W_1*W_2] =\mathbb{E}[W_t_1]*\mathbb{E}[W_t_2] =0$ et $Var(W_t_1) = t_1$, donc  $cov(W_t_1, W_t_2) = t_1$:
+La variance, sachant que $\mathbb{E}[W_1*W_2] =\mathbb{E}[W_{t_1}]*\mathbb{E}[W_{t_2}] =0$ et $Var(W_{t_1}) = t_1$, donc  $cov(W_{t_1}, W_{t_2}) = t_1$:
 $$var(X_i) = 
 var(S_0 + sum_{i=1}^{n} W_{t_i}) = 
 var(sum_{i=1}^{n} W_{t_i}) = 
 \mathbb{E}[(sum_{i=1}^{n} W_{t_i})^2] = 
 var(sum_{i=1}^{n} W_{t_i}) =
-\sum_{i=1}^n cov(W_t_i, W_t_i) = 
-\sum_{i=1}^n \sum_{j=1}^n cov(W_t_i, W_t_i) =
-\sum_{i=1}^n \sum_{j=1}^i cov(W_t_i, W_t_j) + sum_{i=1}^{n-1} \sum_{j=i+1}^n cov(W_t_i, W_t_j) =
+\sum_{i=1}^n cov(W_{t_i}, W_{t_i}) = 
+\sum_{i=1}^n \sum_{j=1}^n cov(W_{t_i}, W_{t_i}) =
+\sum_{i=1}^n \sum_{j=1}^i cov(W_{t_i}, W_{t_j}) + sum_{i=1}^{n-1} \sum_{j=i+1}^n cov(W_{t_i}, W_{t_j}) =
 \sum_{i=1}^n \sum_{j=1}^i t_k + sum_{i=1}^{n-1} \sum_{j=i+1}^n t_i =
 T(\sum_{i=1}^n \sum_{j=1}^i \frac{k}{n} + sum_{i=1}^{n-1} \sum_{j=i+1}^n \frac{i}{n}) =
 \frac{T}{n}(\sum_{i=1}^n \frac{i(i+1)}{2} + sum_{i=1}^{n-1} i(n-i)) =
@@ -223,7 +223,7 @@ De toute façon le temps de calcul de $\lambda$ n'est pris compte dans le temps 
 
 \subsubsection{Variable de contrôle 2}
 
-Comme deuxième variable de contrôle sert un mouvement brownien des même pas que les trajectoires et avec $W_t_0=S_0$.
+Comme deuxième variable de contrôle sert un mouvement brownien des même pas que les trajectoires et avec $W_{t_0}=S_0$.
 Ce-ci suit que son ésperance égal $S_0$ et sa variance $T$.
 La covariance doit être calculée empiriquement.
 Avec un échantillon de $n=200$ on calcule ainsi le $\lambda$ avant qu'on simule les $Z_i$.
@@ -306,7 +306,7 @@ Toutes les fiches se trouvent dans le repository en ligne:
 \lstinputlisting{mini_projet.m}
 
 \section{Code VBA}
-\lstinputlisting[
+\begin{lstlisting}[
     breaklines=true,
     tabsize=3,
     showstringspaces=false
@@ -317,6 +317,733 @@ Toutes les fiches se trouvent dans le repository en ligne:
     framerule=0.4pt,%expand outward.
     xleftmargin=3.4pt,%make the frame fits in the text area. 
     xrightmargin=3.4pt,%make the frame fits in the text area.
-    ]{VBA_script.txt}
+    literate={$}{{\$}}1]
+Option Explicit
+
+Public n, nt, Nd As Integer
+Public S0, k, r, sigma, T As Double
+
+Sub Macro1()
+
+
+' worksheets
+Dim sh_dash, sh_traj, sh_ic As String
+Dim sh_dash_o As Worksheet
+sh_dash = "Dashboard"
+sh_traj = "trajectoires"
+sh_ic = "IC"
+Set sh_dash_o = Worksheets(sh_dash)
+
+
+' ~~~~~~~~~~ parametres ~~~~~~~~~~
+
+
+
+S0 = Range("S0_").Value
+k = Range("K_").Value
+
+r = Range("r_").Value
+sigma = Range("sigma_").Value
+
+n = Range("n_").Value
+T = Range("T_").Value
+Nd = Range("Nd_").Value
+
+nt = Range("nt_").Value
+
+
+Dim dt As Double
+dt = T / n
+
+
+Dim tps_debut, tps_passe As Double
+Dim n_aff As Integer
+n_aff = 10 'nombre des trajectoires affichees dans le graphique
+
+' premier cellule de la table de trajectoires ~ t0
+Dim Srow, Scol As Integer
+Dim Scol_abc As String
+Srow = 3
+Scol_abc = "I"
+Scol = 9
+
+' iteratives
+Dim i, j, l As Integer
+
+' array pour enregistrer les simulations
+Dim X() As Double 'for some reason double arrays must be defined one by one, else they are variant
+Dim X_N() As Double
+Dim C() As Double
+
+Dim dW As Double
+Dim a, b, e, f As Double
+
+'effacer t et S() anciens
+With Worksheets(sh_traj)
+    Range(.Cells(3, 1), _
+          .Cells(Srow + 10000, Scol + 10000)).Delete
+End With
+
+
+' afficher t
+Dim temps() As Double
+ReDim temps(n)
+temps(0) = 0
+For j = 1 To n
+    temps(j) = temps(j - 1) + dt
+Next
+
+'MsgBox temps(0)
+'MsgBox temps(1)
+'MsgBox temps(n)
+'MsgBox Application.CountA(temps)
+'MsgBox UBound(temps)
+
+Sheets(sh_traj).Range("A3:A" & UBound(temps) + 3) = _
+    WorksheetFunction.Transpose(temps)
+
+
+'~~~~~~~~~~~~~~~~~~ series illustratives pour l'affichage ~~~~~~~~~~~~
+'~~~~~~~~~~~~~~~~~~
+' pour le graphique
+'~~~~~~~~~~~~~~~~~~
+
+For j = 1 To n_aff
+    i = 1
+    a = S0
+    
+    
+    'If j <= n_aff Then
+        Sheets(sh_traj).Cells(Srow - 1 + i, Scol - 1 + j).Value = a
+    'End If
+    
+    For i = 2 To n + 1
+        'simuler une v.a. normale
+        dW = Sqr(-2 * Log(Rnd())) * _
+             Cos(6.283185307 * Rnd()) * Sqr(dt)
+        a = a * (1 + (r * dt + sigma * Sqr(a) * dW))
+     
+        'If j <= n_aff Then
+            Sheets(sh_traj).Cells(Srow - 1 + i, Scol - 1 + j).Value = a
+        'End If
+              
+    Next
+Next
+
+'~~~~~~~~~~~~~~~~~~~~~~~~~
+' pour l'exemple de series
+'~~~~~~~~~~~~~~~~~~~~~~~~~
+
+a = S0
+b = S0
+e = S0
+f = S0
+
+
+i = 1
+Sheets(sh_traj).Cells(Srow - 1 + i, 2).Value = a
+Sheets(sh_traj).Cells(Srow - 1 + i, 3).Value = b
+Sheets(sh_traj).Cells(Srow - 1 + i, 4).Value = e
+Sheets(sh_traj).Cells(Srow - 1 + i, 5).Value = f
+
+For i = 2 To n + 1
+    'simuler une v.a. normale
+    dW = Sqr(-2 * Log(Rnd())) * _
+         Cos(6.283185307 * Rnd()) * Sqr(dt)
+    
+    'le prix de l'action
+    a = a * (1 + (r * dt + sigma * Sqr(a) * dW))
+    
+    'la variable antithetique
+    b = b * (1 + (r * dt - sigma * Sqr(b) * dW))
+    
+    'VC_1
+    e = e + dW
+    
+    'VC_2
+    f = f + dW ' * Exp(r * (i - 1) * dt)
+        
+    Sheets(sh_traj).Cells(Srow - 1 + i, 2).Value = a
+    Sheets(sh_traj).Cells(Srow - 1 + i, 3).Value = b
+    Sheets(sh_traj).Cells(Srow - 1 + i, 4).Value = e
+    Sheets(sh_traj).Cells(Srow - 1 + i, 5).Value = f
+    
+Next
+    
+
+'~~~~~~~~~~~~~~~~ X_inf ~~~~~~~~~~~~~~~~
+
+tps_debut = Timer
+
+ReDim X(1 To nt)
+
+'simuler S pas a pas, afficher n_aff S dans sh_traj
+
+For j = 1 To nt
+    i = 1
+    a = S0
+    X(j) = 0.5 * a / n
+    
+    
+    For i = 2 To n + 1
+        'simuler une v.a. normale
+        dW = Sqr(-2 * Log(Rnd())) * _
+             Cos(6.283185307 * Rnd()) * Sqr(dt)
+        a = a * (1 + (r * dt + sigma * Sqr(a) * dW))
+        X(j) = X(j) + a / n
+              
+    Next
+   
+    X(j) = X(j) - 0.5 * a / n
+  
+Next
+
+'Calculer C a temps 0 avec X et K
+C = payoff(X)
+
+' ~~~~~~~~~~~~~~~~~
+' estimateurs X_inf
+'~~~~~~~~~~~~~~~~~~
+
+Dim C_mu, C_std, C_mu_b, C_mu_h As Double
+
+C_mu = Mean(C)
+C_std = StdDev(C)
+
+C_mu_b = C_mu - 1.96 * C_std / Sqr(nt)
+C_mu_h = C_mu + 1.96 * C_std / Sqr(nt)
+
+tps_passe = Round(Timer - tps_debut, 3)
+
+'affichage
+Sheets(sh_ic).Range("A3").Value = "C_inf"
+Sheets(sh_ic).Range("B3").Value = C_mu_b
+Sheets(sh_ic).Range("C3").Value = C_mu
+Sheets(sh_ic).Range("D3").Value = C_mu_h
+Sheets(sh_ic).Range("E3").Value = tps_passe
+
+
+'~~~~~~~~~~~~~~~~ X_N ~~~~~~~~~~~~~~~~
+
+tps_debut = Timer
+
+' pour X_N
+ReDim X_N(1 To nt)
+
+'simuler S pas a pas, afficher n_aff S dans sh_traj
+
+For j = 1 To nt
+    l = 1
+    i = 1
+    a = S0
+    X_N(j) = 0.5 * a / Nd
+    
+    For i = 1 To n
+        'simuler une v.a. normale
+        dW = Sqr(-2 * Log(Rnd())) * _
+             Cos(6.283185307 * Rnd()) * Sqr(dt)
+        a = a * (1 + (r * dt + sigma * Sqr(a) * dW))
+        
+        If (i / n) > (l / Nd) Then
+            X_N(j) = X_N(j) + a / Nd
+            l = l + 1
+        End If
+        
+    Next
+    
+    X_N(j) = X_N(j) + 0.5 * a / Nd
+
+Next
+
+'Sheets(sh_ic).Range("G1:G" & UBound(X_N)) = _
+'    WorksheetFunction.Transpose(X_N)
+'MsgBox X_N(Nd - 1)
+'Calculer C_N a temps 0 avec X et K
+C = payoff(X_N)
+
+' ~~~~~~~~~~~~~~~~~
+' estimateurs X_N
+'~~~~~~~~~~~~~~~~~~
+
+C_mu = Mean(C)
+C_std = StdDev(C)
+
+C_mu_b = C_mu - 1.96 * C_std / Sqr(nt)
+C_mu_h = C_mu + 1.96 * C_std / Sqr(nt)
+
+tps_passe = Round(Timer - tps_debut, 3)
+'affichage
+Sheets(sh_ic).Range("A8").Value = "C_N"
+Sheets(sh_ic).Range("B8").Value = C_mu_b
+Sheets(sh_ic).Range("C8").Value = C_mu
+Sheets(sh_ic).Range("D8").Value = C_mu_h
+Sheets(sh_ic).Range("E8").Value = tps_passe
+
+
+'~~~~~~~~~~~~~~~~ X_anti ~~~~~~~~~~~~~~~~
+
+tps_debut = Timer
+Dim X_anti() As Double
+ReDim X_anti(1 To nt)
+
+'simuler S pas a pas, afficher n_aff S dans sh_traj
+
+For j = 1 To nt
+    a = S0
+    b = S0
+    X(j) = 0.5 * a / n
+    X_anti(j) = 0.5 * b / n
+    i = 1
+    
+    For i = 2 To n + 1
+        'simuler une v.a. normale
+        dW = Sqr(-2 * Log(Rnd())) * _
+             Cos(6.283185307 * Rnd()) * Sqr(dt)
+        
+        a = a * (1 + (r * dt + sigma * Sqr(a) * dW))
+        X(j) = X(j) + a / n
+        
+        b = b * (1 + (r * dt - sigma * Sqr(b) * dW))
+        X_anti(j) = X_anti(j) + b / n
+
+    Next
+    
+    X(j) = X(j) - 0.5 * a / n
+    X_anti(j) = X_anti(j) - 0.5 * b / n
+
+Next
+
+
+' ~~~~~~~~~~~
+' estimateurs
+'~~~~~~~~~~~~
+
+Dim Z_mu, rho, Z_std, Z_mu_b, Z_mu_h As Double
+
+Dim C_anti() As Double
+ReDim C(1 To nt)
+
+C_anti = payoff(X_anti)
+C = payoff(X)
+
+Z_mu = (Mean(C_anti) + Mean(C)) / 2
+
+Dim SumSq As Double
+SumSq = 0
+For i = 1 To nt
+        SumSq = SumSq + (C_anti(i) - Z_mu) ^ 2 + (C(i) - Z_mu) ^ 2
+Next i
+Z_std = SumSq / (2 * nt - 1)
+
+Z_mu_b = Z_mu - 1.96 * Z_std / Sqr(2 * nt)
+Z_mu_h = Z_mu + 1.96 * Z_std / Sqr(2 * nt)
+    
+tps_passe = Round(Timer - tps_debut, 3)
+
+'affichage
+Sheets(sh_ic).Range("A5").Value = "C_anti"
+Sheets(sh_ic).Range("B5").Value = Z_mu_b
+Sheets(sh_ic).Range("C5").Value = Z_mu
+Sheets(sh_ic).Range("D5").Value = Z_mu_h
+Sheets(sh_ic).Range("E5").Value = tps_passe
+
+'~~~~~~~~~~~~~~~~ X_5nt ~~~~~~~~~~~~~~~~
+
+nt = 5 * nt
+tps_debut = Timer
+ReDim X(1 To nt)
+'ReDim C(1 To nt)
+
+'simuler S pas a pas, afficher n_aff S dans sh_traj
+
+For j = 1 To nt
+    a = S0
+    X(j) = 0.5 * a / n
+    i = 1
+    
+    For i = 2 To n + 1
+        'simuler une v.a. normale
+        dW = Sqr(-2 * Log(Rnd())) * _
+             Cos(6.283185307 * Rnd()) * Sqr(dt)
+        a = a * (1 + (r * dt + sigma * Sqr(a) * dW))
+        X(j) = X(j) + a / n
+        
+    Next
+    
+    X(j) = X(j) - 0.5 * a / n
+
+Next
+
+'Calculer C a temps 0 avec X et K
+C = payoff(X)
+
+' ~~~~~~~~~~~
+' estimateurs
+'~~~~~~~~~~~~
+
+C_mu = Mean(C)
+C_std = StdDev(C)
+
+C_mu_b = C_mu - 1.96 * C_std / Sqr(nt)
+C_mu_h = C_mu + 1.96 * C_std / Sqr(nt)
+
+tps_passe = Round(Timer - tps_debut, 3)
+
+'affichage
+Sheets(sh_ic).Range("A4").Value = "C_5nt"
+Sheets(sh_ic).Range("B4").Value = C_mu_b
+Sheets(sh_ic).Range("C4").Value = C_mu
+Sheets(sh_ic).Range("D4").Value = C_mu_h
+Sheets(sh_ic).Range("E4").Value = tps_passe
+
+nt = nt / 5
+ReDim X(1 To nt)
+ReDim C(1 To nt)
+
+'~~~~~~~~~~~~~~~~ X_VC_1 ~~~~~~~~~~~~~~~~
+    
+Dim Y() As Double
+ReDim Y(1 To nt)
+Dim Z() As Double
+ReDim Z(1 To nt)
+
+tps_debut = Timer
+
+For j = 1 To nt
+    a = S0
+    e = S0
+    X(j) = 0.5 * a / n
+    Y(j) = 0.5 * e / n
+    i = 1
+    
+    For i = 2 To n + 1
+        'simuler une v.a. normale
+        dW = Sqr(-2 * Log(Rnd())) * _
+             Cos(6.283185307 * Rnd()) * Sqr(dt)
+        
+        'comme X_inf
+        a = a * (1 + (r * dt + sigma * Sqr(a) * dW))
+        X(j) = X(j) + a / n
+        
+        'VC
+        e = e + dW
+        Y(j) = Y(j) + e / n
+        
+        
+    Next
+    
+    X(j) = X(j) - 0.5 * a / n
+    Y(j) = Y(j) - 0.5 * e / n
+Next
+
+'Problematique: Les X et Y ne sont pas independant en utilisant le meme processus?
+
+' ~~~~~~~~~~~
+' estimateurs
+'~~~~~~~~~~~~
+'Non overlapping increments Wt-Ws and Wv-Wu for any 0=s<t=>u<v are independent of each other.
+
+Dim lambda As Double
+
+'E(Y) = S0
+' lambda = Cov/sigma_Y^2
+' Cov estime
+' sigma_Y ?
+' Var(Y) ~ Var(somme de mouv. brown) = E(somme(dw)^2) - E^2(somme(dw)) ? E[ int(dW^2) ]
+'https://math.stackexchange.com/questions/752011/variance-of-sum-of-brownian-motions
+'=T/6(2n^2+3n+1)
+
+'je suppose que ca dure tres longtemps, calculer lambda
+' idee: calculer lambda, puis le fixer
+
+tps_passe = Timer - tps_debut
+Dim sigma2_Y As Double
+sigma2_Y = (T / 6 * (2 * (n * n) + 3 * n + 1))
+lambda = Cov(X, Y) / Sqr(sigma2_Y)
+MsgBox "le lambda de VC_1 = " & lambda
+MsgBox "le rho_XY =" & Cov(X, Y) / (StdDev(X) * Sqr(sigma2_Y))
+tps_debut = Timer
+
+For i = LBound(Z) To UBound(Z)
+    Z(i) = X(i) - lambda * (Y(i) - S0 * T)
+Next
+
+C = payoff(Z)
+
+C_mu = Mean(C)
+C_std = StdDev(C)
+
+C_mu_b = C_mu - 1.96 * C_std / Sqr(nt)
+C_mu_h = C_mu + 1.96 * C_std / Sqr(nt)
+
+tps_passe = Round(tps_passe + tps_debut - Timer, 3)
+
+'affichage
+Sheets(sh_ic).Range("A6").Value = "VC_1"
+Sheets(sh_ic).Range("B6").Value = C_mu_b
+Sheets(sh_ic).Range("C6").Value = C_mu
+Sheets(sh_ic).Range("D6").Value = C_mu_h
+Sheets(sh_ic).Range("E6").Value = tps_passe
+
+
+'~~~~~~~~~~~~~~~~ X_VC_2 ~~~~~~~~~~~~~~~~
+
+'calculer lambda avec n=200
+For j = 1 To 200
+    a = S0
+    f = S0
+    X(j) = 0.5 * a / n
+
+    i = 1
+    For i = 1 To n
+        'simuler une v.a. normale
+        dW = Sqr(-2 * Log(Rnd())) * _
+             Cos(6.283185307 * Rnd()) * Sqr(dt)
+        
+        'comme X_inf
+        a = a * (1 + (r * dt + sigma * Sqr(a) * dW))
+        X(j) = X(j) + a / n
+        
+        'VC
+        f = f + dW
+        
+    Next
+    
+    X(j) = X(j) - 0.5 * a / n
+    Y(j) = f
+Next
+
+Dim EY As Double
+EY = S0
+
+sigma2_Y = T
+lambda = Cov(X, Y) / sigma2_Y
+
+MsgBox "le lambda de VC_2 = " & lambda
+MsgBox "le rho_XY =" & Cov(X, Y) / (StdDev(X) * Sqr(sigma2_Y))
+
+'Puis simuler les trajectoires et la variable de controle
+tps_debut = Timer
+
+For j = 1 To nt
+    a = S0
+    f = S0
+    X(j) = 0.5 * a / n
+    'Y(j) = 0.5 * e / n
+    i = 1
+    
+    For i = 1 To n
+        'simuler une v.a. normale
+        dW = Sqr(-2 * Log(Rnd())) * _
+             Cos(6.283185307 * Rnd()) * Sqr(dt)
+        
+        'comme X_inf
+        a = a * (1 + (r * dt + sigma * Sqr(a) * dW))
+        X(j) = X(j) + a / n
+        
+        'VC
+        f = f + dW
+        'Y(j) = Y(j) + f / n
+        
+        
+    Next
+    
+    X(j) = X(j) - 0.5 * a / n
+    'Y(j) = Y(j) - 0.5 * f / n
+    Y(j) = f
+Next
+
+
+' ~~~~~~~~~~~
+' estimateurs
+'~~~~~~~~~~~~
+
+
+For i = LBound(Z) To UBound(Z)
+    Z(i) = X(i) - lambda * (Y(i) - EY)
+Next
+
+C = payoff(Z)
+
+C_mu = Mean(C)
+C_std = StdDev(C)
+
+C_mu_b = C_mu - 1.96 * C_std / Sqr(nt)
+C_mu_h = C_mu + 1.96 * C_std / Sqr(nt)
+
+tps_passe = Round(Timer - tps_debut, 3)
+
+'affichage
+Sheets(sh_ic).Range("A7").Value = "VC_2"
+Sheets(sh_ic).Range("B7").Value = C_mu_b
+Sheets(sh_ic).Range("C7").Value = C_mu
+Sheets(sh_ic).Range("D7").Value = C_mu_h
+Sheets(sh_ic).Range("E7").Value = tps_passe
+
+
+'~~~~~~~~~~~~~~~~ affichage ~~~~~~~~~~~~~~~~~~
+    
+    
+' ~~~~~~~~~~~~~~~~~~~
+' faire defiler le tableau
+' ~~~~~~~~~~~~~~~~~~~
+
+Sheets(sh_dash).Shapes.Range(Array("Scroll Bar 2")).Select
+' problematique: le baton pour defiler reste selecter
+' d'ailleurs, si quelque chose d'autre est selecte, il y a de problemes
+' pour le moment: faut demarrer la programme seulement par le bouton !
+
+With Selection
+'Range(Array("Scroll Bar 2"))
+.Value = 0
+'Range(Array("Scroll Bar 2"))
+.Min = 0
+'Range(Array("Scroll Bar 2"))
+.Max = n - 10
+'Range(Array("Scroll Bar 2"))
+.SmallChange = 1
+'Range(Array("Scroll Bar 2"))
+.LargeChange = 20
+'Range(Array("Scroll Bar 2"))
+.LinkedCell = "trajectoires!F2"
+'Range (Array("Scroll Bar 2"))
+.Display3DShading = True
+End With
+    
+
+Range("M4").FormulaR1C1 = _
+    "=OFFSET(trajectoires!R[-1]C[-12], trajectoires!R2C6,0)"
+Range("M4").AutoFill Destination:=Range("M4:M14"), Type:=xlFillDefault
+Range("M4:M14").AutoFill Destination:=Range("M4:Q14"), Type:=xlFillDefault
+
+' ~~~~~~~~~~~~~~~~
+' affichage graphe
+' ~~~~~~~~~~~~~~~~
+
+Dim chartrange As Range
+Set chartrange = Sheets(sh_traj).Cells(Srow, Scol)
+Set chartrange = chartrange.Resize(n + 1, n_aff)
+
+Worksheets(sh_dash).Activate
+Dim Graphe As Object
+
+'effacer graphes aines
+For Each Graphe In ActiveSheet.ChartObjects
+  Graphe.Delete
+Next Graphe
+
+Set Graphe = sh_dash_o.ChartObjects.Add( _
+    Left:=Range("G3").Left, Width:=360 - 70, _
+    Top:=Range("G3").Top, Height:=185)
+With Graphe.Chart
+    .SetSourceData chartrange
+    .PlotBy = xlColumns 'echanger x et y axes
+    .ChartType = xlLine
+    '.HasTitle = True
+    '.ChartTitle.Text = "Prix des actions"
+    .FullSeriesCollection(1).XValues = _
+        Range(Scol_abc & Srow & ":" _
+              & Scol_abc & UBound(temps) + 1)
+    .Legend.Delete
+    '.Axes(xlCategory).HasTitle = True
+    '.Axes(xlCategory).AxisTitle.Text = "t"
+    .Axes(xlValue).MinimumScale = Application.WorksheetFunction.RoundDown(WorksheetFunction.Min(chartrange), 0)
+    .ChartColor = 11
+End With
+
+'If False Then
+' ~~~~~~~~~~~~~~~~
+' affichage IC
+' ~~~~~~~~~~~~~~~~
+Dim Graphe_IC As Object
+Set Graphe_IC = sh_dash_o.ChartObjects.Add( _
+    Left:=Range("I17").Left, Width:=300 - 60, _
+    Top:=Range("I17").Top, Height:=115)
+
+With Graphe_IC.Chart
+'Shapes.AddChart2(201, xlColumnClustered).Select
+    .SetSourceData Source:=Range("IC!$A$2:$D$8")
+    .FullSeriesCollection(1).ChartType = xlColumnClustered
+    .FullSeriesCollection(1).AxisGroup = 1
+    .FullSeriesCollection(2).ChartType = xlColumnClustered
+    .FullSeriesCollection(2).AxisGroup = 1
+    .FullSeriesCollection(3).ChartType = xlLine
+    .FullSeriesCollection(3).AxisGroup = 1
+    .FullSeriesCollection(1).ChartType = xlXYScatter
+    .FullSeriesCollection(3).ChartType = xlXYScatter
+    .FullSeriesCollection(3).AxisGroup = 1
+    .FullSeriesCollection(1).AxisGroup = 1
+    .Legend.Delete
+    .ChartColor = 11
+End With
+
+Dim chart_shp As Shape
+For Each chart_shp In ActiveSheet.Shapes
+    chart_shp.Line.Visible = msoFalse
+Next chart_shp
+
+Range("D17").Select
+MsgBox "Simulation finie pour " & nt & " trajectoires.", vbInformation
+'MsgBox chartrange.Address
+
+End Sub
+
+
+Function Mean(Arr() As Double)
+    Dim Sum As Double
+    Dim i, k As Integer
+    k = Application.CountA(Arr)
+    Sum = 0
+    For i = 1 To k
+        Sum = Sum + Arr(i)
+    Next i
+ 
+    Mean = Sum / k
+
+End Function
+
+Function StdDev(Arr() As Double)
+    Dim i, k As Integer
+    Dim avg As Double, SumSq As Double
+    k = Application.CountA(Arr)
+    avg = Mean(Arr)
+    For i = 1 To k
+        SumSq = SumSq + (Arr(i) - avg) ^ 2
+    Next i
+    StdDev = Sqr(SumSq / (k - 1))
+
+End Function
+
+Function Cov(Arr1() As Double, Arr2() As Double)
+    ' faudra verifier que les deux Arr ont les meme dimensions
+    Dim i As Integer
+    Dim avg1, avg2, SumSq As Double
+    'k = Application.CountA(Arr1)
+    avg1 = Mean(Arr1)
+    avg2 = Mean(Arr2)
+    For i = 1 To nt
+        SumSq = SumSq + (Arr1(i) - avg1) * (Arr2(i) - avg2)
+    Next i
+    Cov = SumSq / (nt - 1)
+
+End Function
+
+Function payoff(a() As Double) ', Optional k As Double = k, Optional r As Double = r, Optional T As Double = T)
+    Dim l As Integer
+    l = Application.CountA(a)
+    Dim i As Integer
+    Dim C() As Double
+    ReDim C(1 To l)
+    For i = 1 To l
+        If a(i) > k Then
+            C(i) = Exp(-r * T) * (a(i) - k)
+        Else
+            C(i) = 0
+        End If
+    payoff = C
+Next
+
+End Function
+\end{lstlisting}
 
 \end{document}
