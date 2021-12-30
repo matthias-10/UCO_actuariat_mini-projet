@@ -18,7 +18,7 @@ n = 2^6;                % Nombre de intervalles
 T = 5;                  % Fin de la periode/exercice = tau
 Nd = 8;                 % Nombre des sous-intervalles 
 
-nt = 1000;            % Nombre de trajectoires
+nt = 10000;            % Nombre de trajectoires
 
 alpha = 0.05;           % niveau au risque
 
@@ -121,12 +121,12 @@ X = (X+S)/Nd;
 C = exp(-r*T) * max(X-K,0);
 
 % C
-C_est = mean(C);
-C_est_var = var(C)/nt; %/nt ?
+C_N_est = mean(C);
+C_N_est_var = var(C)/nt; %/nt ?
 
-C_IC_inf = C_est + sqrt(C_est_var)*norminv(alpha/2);
-C_IC_sup = C_est + sqrt(C_est_var)*norminv(1-alpha/2);
-L = C_IC_sup-C_IC_inf;
+C_N_IC_inf = C_N_est + sqrt(C_N_est_var)*norminv(alpha/2);
+C_N_IC_sup = C_N_est + sqrt(C_N_est_var)*norminv(1-alpha/2);
+L = C_N_IC_sup-C_N_IC_inf;
 tps = toc;
 
 % fonction d'affichage 
@@ -135,9 +135,9 @@ fprintf('\n')
 fprintf('pour X_prime: \n');
 
 disp(strcat(...
-{' C = '},sprintf('%05.3f',C_est),...
-{' IC = ['},sprintf('%05.3f',C_IC_inf),...
-{' , '},sprintf('%05.3f',C_IC_sup),...
+{' C = '},sprintf('%05.3f',C_N_est),...
+{' IC = ['},sprintf('%05.3f',C_N_IC_inf),...
+{' , '},sprintf('%05.3f',C_N_IC_sup),...
 {'] '},...
 {' largeur = '},sprintf('%05.3f',L),...
 {' t = '},sprintf('%05.3f',tps),...
@@ -148,7 +148,7 @@ disp(strcat(...
 
 tic
 
-S = S0 * ones(nb_trajectoires,1);
+S = S0 * ones(nt, 1);
 Sa = S;
 X = S/2;
 Xa = X;
@@ -191,9 +191,9 @@ disp(strcat(...
 
 
 % efficace ?
-co = cov([X Xa]);
-fprintf(['La covariance entre X et la variable '...
-        'antithetique est: %0.5g'], co(2,2))
+%co = cov([X Xa]);
+%fprintf(['La covariance entre X et la variable '...
+%        'antithetique est: %0.5g \n'], co(2,2))
 
 
 %% ~~~~~~~~~~~~~ variable de controle 1 ~~~~~~~~~~~~~~~~ %%
@@ -219,10 +219,12 @@ for i = 2:(n+1)
 end
 X = (X - S/2)/n;
 
-A = cov(X, VC);
-lambda = A(1,2)/A(2,2);
+C = exp(-r*T) * max(X-K,0);
+A = cov(C, VC);
+lambda = A(1,2)/A(2,2); 
 
-% Deutsch a utilise le payoff au lieu de X
+% en utilisant les est. empiriques
+% comparer avec les moments analytiques? -> voir pdf/VBA
 
 
 % ~~~~~~~~~~~~~~~~~~~~~ simuler ~~~~~~~~~~~~~~~~~~~~~~~~~ %
@@ -239,17 +241,16 @@ for i = 2:(n+1)
     VC = VC + dW_t;
 end
 X = (X - S/2)/n;
+C = exp(-r*T) * max(X-K,0);
 
-Z = X - lambda * (VC - S0);
-%%%%%
-C = exp(-r*T) * max(Z-K,0);
+Z = C - lambda * (VC - S0);
 
-C_est = mean(C);
-C_est_var = var(C)/nt;
+C_2_est = mean(Z);
+C_2_est_var = var(Z)/nt;
 
-C_IC_inf = C_est + sqrt(C_est_var)*norminv(alpha/2);
-C_IC_sup = C_est + sqrt(C_est_var)*norminv(1-alpha/2);
-L = C_IC_sup - C_IC_inf;
+C_2_IC_inf = C_2_est + sqrt(C_2_est_var)*norminv(alpha/2);
+C_2_IC_sup = C_2_est + sqrt(C_2_est_var)*norminv(1-alpha/2);
+L = C_2_IC_sup - C_2_IC_inf;
 
 tps = toc;
 
@@ -259,179 +260,41 @@ fprintf('\n')
 fprintf('Variable de controle - somme de dW_t: \n');
 
 disp(strcat(...
-{' C = '},sprintf('%05.3f',C_est),...
-{' IC = ['},sprintf('%05.3f',C_IC_inf),...
-{' , '},sprintf('%05.3f',C_IC_sup),...
+{' C = '},sprintf('%05.3f',C_2_est),...
+{' IC = ['},sprintf('%05.3f',C_2_IC_inf),...
+{' , '},sprintf('%05.3f',C_2_IC_sup),...
 {'] '},...
 {' largeur = '},sprintf('%05.3f',L),...
 {' t = '},sprintf('%05.3f',tps),...
 {' eff = '},sprintf('%05.3f',L * sqrt(tps))));
 
+%p = corr(X, VC); 
+% optimum: lambda =~ corr(X,Y)*(Var(X)/Var(Y))^.5
+% efficace ?
+%fprintf(['La correlation entre X et la variable '...
+%        'de controle est: %0.5g\n'], p)
+
 
 %% ~~~~~~~~~~~~~ variable de controle 3 ~~~~~~~~~~~~~~~~ %%
-    dWt_vc = normrnd(zeros(nt,1),sqrt(dt));
-    dWt_vc = dWt_vc + dWt_vc .*sign(dWt).*(sign(dWt_vc) - sign(dWt));
-    dSi = VC(:,i-1).* ...
-          ( r*dt + sigma*sqrt(S(:,i-1)).*dWt_vc );
-    VC(:,i)      =    VC(:,i-1) + dSi;
-    VC(:,i) = VC(:,i) .* (VC(:,i) >= 0);
+
+% mouvement brownien de la meme signe
+
+%dWt_vc = normrnd(zeros(nt,1),sqrt(dt));
+%dWt_vc = dWt_vc + dWt_vc .*sign(dWt).*(sign(dWt_vc) - sign(dWt));
+%dSi = VC(:,i-1).* ...
+%      ( r*dt + sigma*sqrt(S(:,i-1)).*dWt_vc );
+%VC(:,i)      =    VC(:,i-1) + dSi;
+%VC(:,i) = VC(:,i) .* (VC(:,i) >= 0);
 
 
-%% ~~~~~~~~~~~~~~ C_inf: calcul avec X_T ~~~~~~~~~~~~~~~ %%
+%% ~~~~~~~~~~~~~ variable de controle 4 ~~~~~~~~~~~~~~~~ %%
 
-% integral: l'aire de 0 a T sous S
-X = (0.5*S0 + sum(S(:,2:n),2) + 0.5*S(:,n+1))/n;
-
-C = (X - K) .* logical( X - K >= 0 );
-C_0 = exp(-r*T)*C;
-
-% avec la variable antithetique
-X_a = (0.5*S0 + sum(S_anti(:,2:n),2) + 0.5*S_anti(:,n+1))/n;
-% avec la variable de controle
-X_vc = (0.5*S0 + sum(VC(:,2:n),2) + 0.5*VC(:,n+1))/n;
-
-
-
-
-
-
-%% ~~~~~~~~~~~~~~~~~~~ estimateurs ~~~~~~~~~~~~~~~~~~~~~ %%
-    
-% ~ Estimateur ~
-% C_inf * exp(-rT) est une martingale donc 
-% E[exp(-rT)*C_inf]= C_inf(S_0)
-
-% C
-C_0_est = mean(C_0);
-C_est_var = var(C_0)/nt; %/nt ?
-
-X_mu = mean(X);
-
-% C_N
-C_0_prim_est = mean(C_0_prim);
-C_prim_est_var = var(C_0_prim)/nt; %/nt?
-
-X_prim_mu = mean(X_prim);
-
-
-%% ~~~~~~~~~~~~~~ intervalle de confiance ~~~~~~~~~~~~~~ %%
-%                 (seulement pour N=inf)                  %
-
-v = nt/(nt-1)*var(X); % variance d'echantillonnage
-
-%%% variable supossee normale
-X_IC_gauss = [X_mu + sqrt(v/nt)*norminv(alpha/2) ...
-              X_mu + sqrt(v/nt)*norminv(1-alpha/2) ];
-
-% variable antithetique
-X_ab_mu = mean([X;X_a]);
-na = 2*nt;
-va = na/(na-1)*var([X;X_a]);
-X_a_IC_gauss = [X_ab_mu + sqrt(va/na)*norminv(alpha/2) ...
-                X_ab_mu + sqrt(va/na)*norminv(1-alpha/2)];
-
-% efficace ?
-co = cov([X X_a]);
-fprintf(['\nLa covariance entre X et la variable '...
-        'antithetique est: %0.5g\n'], co(2,2))
-
-%%% bootstrap pour C
-sims = 10^3;
-y = zeros(1, sims);
-for i = 1:sims
-    y(i) = mean(randsample(C_0_est,nt,true)) - C_0_est;
-end
-
-C_IC_boot =  [C_0_est + quantile(y,alpha/2) ...
-              C_0_est + quantile(y,1-alpha/2) ];
-
-
-%% ~~~~~~~~~~~~~~ variable de controle ~~~~~~~~~~~~~~~~~ %%
-%                (seulement pour X_inf)                   %
-
-
-% on pourrai utiliser au lieu de la var. antithetique la
-% variable de controle suivante et vice-versa
-
-% E(Y) ~= E(X) ~= E(Z) =~ mean(X_a)
-
-EY_vc = mean(X_vc);
-X_vc;
-
-p = corr(X, X_vc); 
-% optimum: lambda =~ corr(X,Y)*(Var(X)/Var(Y))^.5
-lambda = p*(var(X)/var(X_vc))^.5;
-Z_vc = X - lambda * (X_vc - EY_vc);
-
-na = nt;
-va = na/(na-1)*var(Z_vc);
-
-Z_IC_gauss = [EY_vc + sqrt(va/na)*norminv(alpha/2) ...
-              EY_vc + sqrt(va/na)*norminv(1-alpha/2)];
-
-% efficace ?
-fprintf(['\nLa correlation entre X et la variable '...
-        'de controle X_vc est: %0.5g\n'], p)
-
-
-% utilisant X_a
-
-EY_a = mean(X_a);
-Y = 2*EY_a - X_a; % X_mu + EY_a - X_a ???
-
-p = corr(X, Y); 
-%bien entendu, les deux sont au-peu-pres 1 correles
-
-% optimum: lambda =~ corr(X,Y)*(Var(X)/Var(Y))^.5
-lambda = p*(var(X)/var(Y))^.5;
-Z_a = X - lambda * (Y - EY_a);
-
-na = nt;
-va = na/(na-1)*var(Z_a);
-
-Z_a_IC_gauss = [EY_a + sqrt(va/na)*norminv(alpha/2) ...
-                EY_a + sqrt(va/na)*norminv(1-alpha/2)];
-
-% efficace ?
-fprintf(['\nLa correlation entre X et la variable '...
-        'de controle X_a est: %0.5g\n'], corr(X,X_a))
-
-%% ~~~~~~~~~~~~ affichage des estimateurs ~~~~~~~~~~~~~~ %%
-
-duree= toc;
-
-fprintf('Fini en %0.5g secondes\n', duree);
-fprintf('\n')
-
-fprintf(' ~ Les estimateurs Monte-Carlo: ~ \n')
-
-fprintf('L''estimateur du C_inf ajd = %0.5g\n', ...
- C_0_est);
-fprintf('Son ecart type = %0.5g\n', sqrt(C_est_var));
-
-
-fprintf(['L''estimateur du C_N ajd, avec ' ...
-    '%d sous-intervalles = %0.5g\n'], ...
-    Nd, C_0_prim_est);
-fprintf('Son ecart type = %0.5g\n', sqrt(C_prim_est_var));
-
-% fprintf('\n ~ Des intervalles de Confiance ~ \n');
-% fprintf('L''intervalle de confiance de X (normal):\n');
-% X_IC_gauss
-% fprintf('La meme intervalle avec var. antithetiques:\n');
-% X_a_IC_gauss
-% fprintf(['L''intervalle de confiance '...
-%         'de Z avec VC (normal):\n']);
-% Z_IC_gauss
-% fprintf(['L''intervalle de confiance '...
-%         'de Z avec X_a (normal):\n']);
-% Z_a_IC_gauss
-fprintf('L''intervalle de confiance de C_N (bootstrap):\n');
-C_IC_boot
+% calculer des option europeenes, mais avec des actions:
+% S = S .*(1 +r*dt + sigma*dW_t );
+% alors qu'on puisse calculer leur payoff avec Balckes-Sch.
 
 
 %% ~~~~~~~~~~~~~~~~~~~~~ graphes ~~~~~~~~~~~~~~~~~~~~~~~ %%
-
 
 % 1:   graphes de S; 
 % 2-3: ecdf de C_inf et C_N; 
@@ -440,10 +303,12 @@ C_IC_boot
 % 7:   intervalles de confiance
 
 G = "g";
-P = input(['\n' ...
-    'Pour afficher n''importe quel graphique, tapez ' ...
-    'son numero <1-8> ou [Enter]. \n' ...
-    'Pour quitter tapez plusieures fois [Enter]:\n'] );
+%G = "q" %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%P = input(['\n' ...
+%    'Pour afficher n''importe quel graphique, tapez ' ...
+%    'son numero <1-8> ou [Enter]. \n' ...
+%    'Pour quitter tapez plusieures fois [Enter]:\n'] );
+P=8;
 
 if isstring(P) || isempty(P)
     P = 1;
@@ -605,27 +470,28 @@ while G~="q"
         P=P+1; input('\n');
     case 8
         
-        fprintf('< 8: ICs (normales) >')
-        plot([X_mu X_ab_mu EY_vc EY_a],[1 2 3 4], 'x')
-        line([K K],[0 5],'Color','green','LineStyle','--')
+        w = 3; % nombre des IC affichees
+        %fprintf('< 8: ICs (normales) >')
+        plot([C_est Ca_est C_2_est], 1:w, 'x')
+        %line([K K],[0 5],'Color','green','LineStyle','--')
        
-        line(X_IC_gauss,[1 1])
-        line(X_a_IC_gauss,[2 2])
-        line(Z_IC_gauss,[3 3])
-        line(Z_a_IC_gauss,[4 4])
+        line([C_IC_inf C_IC_sup],[1 1])
+        line([Ca_IC_inf Ca_IC_sup],[2 2])
+        line([C_2_IC_inf C_2_IC_sup],[3 3])
+        
+        legend("estimateurs",'C','C_a','C_{VC2}')
+        L1 = C_IC_sup - C_IC_inf;
+        L2 = C_est - K;
+        limf = [C_IC_inf C_IC_sup] + max(L1,L2)*[-1 1];
+        %xlim(limf)
+        ylim([0 w+1])
+        yticks(1:w)
 
-        legend("estimateurs","K","Z_a","Z_{vc}","X_a","X")
-        L1 = X_IC_gauss(2)-X_IC_gauss(1);
-        L2 = X_mu - K;
-        limf = X_IC_gauss + max(L1,L2)*[-1 1];
-        xlim(limf)
-        ylim([0 5])
-        yticks(1:4)
-
-        yticklabels({'X','X_a', 'Z (vc)', 'Z (a)'})
-        title('Intervalles de confiance (sauf C)')
-
-        P=P+1;
+        yticklabels({'C','C_a','C_{VC2}'})
+        %title('Intervalles de confiance (sauf C)')
+        
+        %P=P+1;
+        G="q";
     case 9
         if n*nt > 100*1000000; G="q"; end
         
@@ -646,20 +512,6 @@ if n*nt > 100*1000000
     warning("Donnees trop grandes pour affichage"); 
 end
 
+%fprintf("\n ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~\n")
+%fprintf(  " ~   MERCI POUR VOTRE ATTENTION    ~")
 fprintf("\n ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~\n")
-fprintf(  " ~   MERCI POUR VOTRE ATTENTION    ~")
-fprintf("\n ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~\n")
-
-% shows that X follow maybe more of a lognormal distr
-histogram(X)
-line([X_mu X_mu], [0 4500])
-
-
-mu = 0;
-sigma=.25;
-M = normrnd(ones(1000),va);
-histogram(X,'Normalization', 'pdf');
-line([0 0], [0 0.1])
-hold on
-histogram(exp(M),'DisplayStyle','stairs','Normalization', 'pdf');
-hold off
