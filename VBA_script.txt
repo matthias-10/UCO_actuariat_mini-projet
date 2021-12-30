@@ -216,7 +216,7 @@ For j = 1 To nt
     l = 1
     i = 1
     a = S0
-    X_N(j) = 0.5 * a / Nd
+    X_N(j) = 0.5 * a / Nd 'c'est faux, non?
     
     For i = 1 To n
         'simuler une v.a. normale
@@ -231,7 +231,8 @@ For j = 1 To nt
         
     Next
     
-    X_N(j) = X_N(j) + 0.5 * a / Nd
+    X_N(j) = X_N(j) + 0.5 * a / Nd 'c'est faux, non?
+    ' pas pour S0, seulement a la fin:  X_N(j) = X_N(j) + a/Nd
 
 Next
 
