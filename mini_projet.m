@@ -495,6 +495,7 @@ C = exp(-r*T) * max(X-K,0);
 A = cov(C, C_VC);
 lambda = A(1,2)/A(2,2); 
 
+% l'esperance de la VC
 E_C_VC = S0;
 for i=2:n
     E_C_VC = E_C_VC*(1 + r*dt);
@@ -521,9 +522,11 @@ X = (X - S/2)/n;
 d1 = log(VC/K);
 d2 = d1; % a temps T
 C_VC = S.*normcdf(d1) - K*exp(-r*T).*normcdf(d2);
+C_VC = max(C_VC, 0);
 C = exp(-r*T) * max(X-K,0);
 
-Z = C - lambda * (C_VC - mean(C_VC)); %E_C_VC);
+%Z = C - lambda * (C_VC - E_C_VC);
+Z = C - lambda * (C_VC -mean(C_VC)); 
 
 C_4_est = mean(Z);
 C_4_est_var = var(Z)/nt;

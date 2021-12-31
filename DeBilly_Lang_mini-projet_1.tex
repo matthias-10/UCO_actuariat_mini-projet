@@ -191,6 +191,9 @@ Vous trouverez les scriptes et les images dans l'annexe, et avec la fiche de das
 
 
 \subsection{Variable antithétique}
+
+à faire
+
 \subsection{Variables de contrôle}
 
 Afin de réaliser une réduction de variance de l'éstimateur, sans être contraint des ressources de calculation, on peut se servire des variables des contrôle.
@@ -308,7 +311,7 @@ C'est pratique de remplacer la variance par sa contrepartie empirique.
 % sigma et r soient connu ici.
 % alors qu'on puisse calculer leur payoff avec Balckes-Sch.
 
-Là il faut calculer l'espérance, car le suivant est évidemment faux:
+Là il faut calculer l'espérance, car le suivant est apparemment faux:
 
 \begin{lstlisting}
 E_C_VC = S0;
@@ -318,13 +321,35 @@ end
 E_C_VC = max(double(E_C_VC-K),0);
 \end{lstlisting}
 
+Voir les captures d'écran dans le dossier ou voir les notes du cours.
+
 \subsubsection{Variable de contrôle 5}
 
 $=exp(W_T/S_0)$
 
 Espérance à démontrer:
-$exp(T/(2*S0^2))$
+$exp(T/(2*S_0^2))$
 
+
+\subsection{Dashboard}
+
+
+%# Excel Dashboard
+
+%### Anti-Features
+
+%* not all control variables
+%* slower and not as many calculation possible, due to limits of VBA, notably the restriction on memory and the inability to calculate vectors
+%* due to the aforementioned numerical disadvantages, the use of e.g. the variable antithétique doesn't make sense
+
+%### Features
+
+%* sheet is protected, area is protected
+%* scrollable
+%* conditional formatting on IC and temps
+%* Data validation
+%* named references
+%* old data and graphics are automatically deleted and newly rendered, no matter the size of the underlying data
 
 
 %%%%%%%% A N N E X E %%%%%%%%%%%%%%%%%%
