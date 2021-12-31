@@ -4,6 +4,7 @@
     + copier le VBA_Script.txt dans le .xlsm
     + VC a une variance fausse: remplacer par sigma2/n^2
     + `C_N` est faux, la méthode de trapezes n'applique pas; `C_inf != C_N`
+    + VC avec C au lieu de X
 * mettre à jour la partie plots de matlab
 * le rapport
   + parmi autres:
