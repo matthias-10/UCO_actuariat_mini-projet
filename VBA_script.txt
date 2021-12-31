@@ -431,7 +431,6 @@ Dim lambda As Double
 ' Cov estime
 ' sigma_Y ?
 ' Var(Y) ~ Var(somme de mouv. brown) = E(somme(dw)^2) - E^2(somme(dw)) ? E[ int(dW^2) ]
-'https://math.stackexchange.com/questions/752011/variance-of-sum-of-brownian-motions
 '=T/6(2n^2+3n+1)
 
 'je suppose que ca dure tres longtemps, calculer lambda

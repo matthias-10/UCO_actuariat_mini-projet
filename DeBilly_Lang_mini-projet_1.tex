@@ -85,6 +85,10 @@
 
 \newpage
 
+\tableofcontents
+
+\newpage
+
 \section{Calculer le prix du sous-jacent}
 
 Nous avons essayé d'atteindre une équation qui ne dèpend que des variables connues comme la formule de Black-Scholes.
@@ -156,7 +160,7 @@ méthode de trapezes
 
 calculer pay-off et actualiser
 
-\subsection{4) $X_T$ remplacé par $X'_T$ ou$X_N$}
+\subsection{exo. 4) Calculer le prix d'exercice avec des intervalles}
 $X_N$ will give a different estimator.
 This could be shown analytically, as even for $\sigma = 0$ the values will be different.
 $X_{inf}$ uses the method of trapezes, giving the area under the whole graph, whereas $X_N$ averages some values starting from $T/Nd$ to $T$.
@@ -202,32 +206,47 @@ $Z_i = X_i - \lambda(Y_i - E(Y_i))$ avec $\lambda = sigma_X/sigma_Y * \rho$.
 
 La première variable est construite avec des bruits blancs, plus ou moins la même manière que le prix d'exercice d'avant.
 Problematique: Les X et Y ne sont pas independant en utilisant le meme processus?
-On ajoute $S_0$ pour que les deux puissent être comparées.
-$$X_i = S_0 + sum_{i=1}^{n} W_{t_i}$$
+Avec $W_{t_0} = S_0$:
+$$X_i = \frac{1}{n}\int_0^i W_{t_i} dt$$
 
-C'est facile de démontrer l'ésperance:
-$$\mathbb{E}[X_i]=\mathbb{E}[S_0 + \sum_{i=1}^{n} W_{t_i}] = S_0$$
+Comme pour la simulation des prix on calcule cette valeur avec la mèthode de trapezes. 
+
+C'est facile de démontrer l'espérance:.
+\begin{align*}
+\mathbb{E}[X_i]= \\
+\mathbb{E}[\frac{1}{n}\int_0^i W_{t_i} dt] =\\
+\frac{1}{n}\mathbb{E}[\int_0^i W_{t_i} dt] =\\
+\frac{1}{n}\mathbb{E}[\int_0^i S_0 + dW_{t_i} dt] =\\
+\frac{1}{n}\mathbb{E}[\sum_0^i S_0 + dW_{t_i} ] =\\
+\frac{1}{n}\mathbb{E}[iS_0 + \sum_0^i dW_{t_i} ] =\\
+\frac{1}{n}(\mathbb{E}[iS_0] + \mathbb{E}[\sum_0^i dW_{t_i} ]) =\\
+\frac{iS_0}{n}(1 + \mathbb{E}[\sum_0^i dW_{t_i} ]) =\\
+\frac{iS_0}{n}(1 + \sum_0^i\mathbb{E}[ dW_{t_i} ]) =
+\frac{iS_0}{n}
+\end{align*}
+Alors $\mathbb{E}[X_T]=S_0$.
 
 %Non overlapping increments Wt-Ws and Wv-Wu for any 0=s<t=>u<v are independent of each other.
 Deux temporaires $[t, s]$ et $[v, u]$, sans chevauche ($[t, s] \wedge [v, u] = \emptyset$) ont valeurs de $W$ qui sont indépendant.
 La variance, sachant que $\mathbb{E}[W_1*W_2] =\mathbb{E}[W_{t_1}]*\mathbb{E}[W_{t_2}] =0$ et $Var(W_{t_1}) = t_1$, donc  $cov(W_{t_1}, W_{t_2}) = t_1$:
+%https://math.stackexchange.com/questions/752011/variance-of-sum-of-brownian-motions
 \begin{align*}
 var(X_i)
-&= var(S_0 + \sum_{i=1}^{n} W_{t_i}) \\
-&= var(\sum_{i=1}^{n} W_{t_i}) \\
-&= \mathbb{E}[(\sum_{i=1}^{n} W_{t_i})^2] \\
-&= var(\sum_{i=1}^{n} W_{t_i}) \\
-&= \sum_{i=1}^n cov(W_{t_i}, W_{t_i}) \\
-&= \sum_{i=1}^n \sum_{j=1}^n cov(W_{t_i}, W_{t_i}) \\
-&= \sum_{i=1}^n \sum_{j=1}^i cov(W_{t_i}, W_{t_j}) + \sum_{i=1}^{n-1} \sum_{j=i+1}^n cov(W_{t_i}, W_{t_j}) \\
-&= \sum_{i=1}^n \sum_{j=1}^i t_k + \sum_{i=1}^{n-1} \sum_{j=i+1}^n t_i \\
-&= T(\sum_{i=1}^n \sum_{j=1}^i \frac{k}{n} + \sum_{i=1}^{n-1} \sum_{j=i+1}^n \frac{i}{n}) \\
-&= \frac{T}{n}(\sum_{i=1}^n \frac{i(i+1)}{2} + \sum_{i=1}^{n-1} i(n-i)) \\
-&= \frac{T}{n}(\frac{1}{6}n(n+1)(n+2)+\frac{1}{6}n(n-1)(n+1)) \\
-&= \frac{T}{6}(2n^2+3n+1)
+&= var(\frac{1}{n}(S_0 + \sum_{i=1}^{n} W_{t_i})) \\
+&= \frac{1}{n^2}var(\sum_{i=1}^{n} W_{t_i}) \\
+&= \frac{1}{n^2}\mathbb{E}[(\sum_{i=1}^{n} W_{t_i})^2] \\
+&= \frac{1}{n^2}var(\sum_{i=1}^{n} W_{t_i}) \\
+&= \frac{1}{n^2}\sum_{i=1}^n cov(W_{t_i}, W_{t_i}) \\
+&= \frac{1}{n^2}\sum_{i=1}^n \sum_{j=1}^n cov(W_{t_i}, W_{t_i}) \\
+&= \frac{1}{n^2} (\sum_{i=1}^n \sum_{j=1}^i cov(W_{t_i}, W_{t_j}) + \sum_{i=1}^{n-1} \sum_{j=i+1}^n cov(W_{t_i}, W_{t_j})) \\
+&= \frac{1}{n^2} (\sum_{i=1}^n \sum_{j=1}^i t_k + \sum_{i=1}^{n-1} \sum_{j=i+1}^n t_i) \\
+&=\frac{1}{n^2}( T(\sum_{i=1}^n \sum_{j=1}^i \frac{k}{n} + \sum_{i=1}^{n-1} \sum_{j=i+1}^n \frac{i}{n})) \\
+&= \frac{1}{n^2}(\frac{T}{n}(\sum_{i=1}^n \frac{i(i+1)}{2} + \sum_{i=1}^{n-1} i(n-i))) \\
+&= \frac{1}{n^2}\frac{T}{n}(\frac{1}{6}n(n+1)(n+2)+\frac{1}{6}n(n-1)(n+1)) \\
+&= \frac{1}{n^2}\frac{T}{6}(2n^2+3n+1)
 \end{align*}
 
-Avec cela et on calcule $\lambda$. lambda peut-être calculé avec des données différentes.
+Avec cela on calcule $\lambda$. $\lambda$ peut-être calculé avec des données différentes.
 De toute façon le temps de calcul de $\lambda$ n'est pas pris compte dans le temps de calcul affiché.
 
 \subsubsection{Variable de contrôle 2}
@@ -250,7 +269,6 @@ Mais ici nous prenons en compte le taux d'interêt. Ça ne veut nécessairement 
 Avec ces trajectoires simulées on garde les dernier valeurs à temps $T$.
 
 Les trajetoires seront simulées ensuite:
-
 
 \begin{align*}
 &\text{soit connu } S_0 \text{, et soit } dS_0 = S_0* r*dt  \\
@@ -282,6 +300,23 @@ mais son espérance peut être calculée pas à pas:
 $$\mathbb{E}[S_i | \mathbb{F}_{i-1}] = S_0*(1+rdt) + \sum_1^i S_{i-1}*r*dt $$
 
 C'est pratique de remplacer la variance par sa contrepartie empirique. 
+
+\subsubsection{Variable de contrôle 4}
+
+% calculer des option europeenes, mais avec des actions:
+% S = S .*(1 +r*dt + sigma*sqrt(S0)*dW_t );
+% sigma et r soient connu ici.
+% alors qu'on puisse calculer leur payoff avec Balckes-Sch.
+
+
+\subsubsection{Variable de contrôle 5}
+
+$=exp(W_T/S_0)$
+
+Espérance à démontrer:
+$exp(T/(2*S0^2))$
+
+
 
 %%%%%%%% A N N E X E %%%%%%%%%%%%%%%%%%
 \clearpage

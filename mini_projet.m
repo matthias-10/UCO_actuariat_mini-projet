@@ -130,7 +130,6 @@ tps = toc;
 
 % fonction d'affichage 
 
-fprintf('\n')
 fprintf('pour X_prime: \n');
 
 disp(strcat(...
@@ -176,7 +175,6 @@ tps = toc;
 
 % fonction d'affichage 
 
-fprintf('\n')
 fprintf('avec une variable antithetique: \n');
 
 disp(strcat(...
@@ -198,8 +196,85 @@ disp(strcat(...
 %% ~~~~~~~~~~~~~ variable de controle 1 ~~~~~~~~~~~~~~~~ %%
 
 % Variable de controle - aire sous un mouvement brownien
-% voir VC2 et VBA
+% ~~~~~~~~~~~~~~~~ Calculer lambda ~~~~~~~~~~~~~~~~~~~~~~ %
 
+S = S0 * ones(nlambda,1);
+VC = S0 * ones(nlambda, 1);
+X = S/2;
+VC_aire = S/2;
+for i = 2:(n+1)
+    dW_t = normrnd(0, sqrt(dt), nlambda, 1);
+    S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
+    X = X+S;
+    VC = VC + dW_t;
+    VC_aire = VC_aire + VC;
+    % succesion des petits accroissements du brownien 
+    % => VC et S sont correles
+end
+X = (X - S/2)/n;
+VC_aire = (VC_aire - VC/2)/n;
+
+C = exp(-r*T) * max(X-K,0);
+A = cov(C, VC_aire);
+sigma2 = (T/6*(2*n^2+3*n+1))/n^2;
+lambda = A(1,2)/sigma2; 
+
+% en utilisant les est. empiriques
+% comparer avec les moments analytiques? -> voir pdf/VBA
+
+% ~~~~~~~~~~~~~~~~~~~~~ simuler ~~~~~~~~~~~~~~~~~~~~~~~~~ %
+
+tic;
+
+S = S0 * ones(nt,1);
+VC = S0 * ones(nt, 1);
+X = S/2;
+VC_aire = X;
+for i = 2:(n+1)
+    dW_t = normrnd(0, sqrt(dt), nt, 1);
+    S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
+    X = X+S;
+    VC = VC + dW_t;
+    VC_aire = VC_aire + VC;
+    % succesion des petits accroissements du brownien 
+    % => VC et S sont correles
+end
+X = (X - S/2)/n;
+VC_aire = (VC_aire - VC/2)/n;
+
+C = exp(-r*T) * max(X-K,0);
+
+Z = C - lambda * (VC_aire - S0);
+
+C_1_est = mean(Z);
+C_1_est_var = var(Z)/nt;
+
+C_1_IC_inf = C_1_est + sqrt(C_1_est_var)*norminv(alpha/2);
+C_1_IC_sup = C_1_est + sqrt(C_1_est_var)*norminv(1-alpha/2);
+L = C_1_IC_sup - C_1_IC_inf;
+
+tps = toc;
+
+% fonction d'affichage 
+
+fprintf('Variable de controle 1- aire sous W_t: \n');
+
+disp(strcat(...
+{' C = '},sprintf('%05.3f',C_1_est),...
+{' IC = ['},sprintf('%05.3f',C_1_IC_inf),...
+{' , '},sprintf('%05.3f',C_1_IC_sup),...
+{'] '},...
+{' largeur = '},sprintf('%05.3f',L),...
+{' t = '},sprintf('%05.3f',tps),...
+{' eff = '},sprintf('%05.3f',L * sqrt(tps))));
+
+p = corr(X, VC_aire); 
+% optimum: lambda =~ corr(X,Y)*(Var(X)/Var(Y))^.5
+% efficace ?
+fprintf(['La correlation entre X et la variable '...
+        'de controle est: %0.5g\n'], p)
+fprintf(['La covariance empirique = %0.5g ; \n' ...
+         'La variance calculee = %0.5g\n'], A(2,2), sigma2)
 
 
 %% ~~~~~~~~~~~~~ variable de controle 2 ~~~~~~~~~~~~~~~~ %%
@@ -227,7 +302,6 @@ lambda = A(1,2)/A(2,2);
 
 % en utilisant les est. empiriques
 % comparer avec les moments analytiques? -> voir pdf/VBA
-
 
 % ~~~~~~~~~~~~~~~~~~~~~ simuler ~~~~~~~~~~~~~~~~~~~~~~~~~ %
 
@@ -259,7 +333,7 @@ tps = toc;
 % fonction d'affichage 
 
 fprintf('\n')
-fprintf('Variable de controle - somme de dW_t: \n');
+fprintf('Variable de controle 2 - somme de dW_t: \n');
 
 disp(strcat(...
 {' C = '},sprintf('%05.3f',C_2_est),...
@@ -335,7 +409,6 @@ double(bonds_T);
 % en utilisant les est. empiriques
 % comparer avec les moments analytiques? -> voir pdf/VBA
 
-
 % ~~~~~~~~~~~~~~~~~~~~~ simuler ~~~~~~~~~~~~~~~~~~~~~~~~~ %
 
 tic;
@@ -371,8 +444,7 @@ tps = toc;
 
 % fonction d'affichage 
 
-fprintf('\n')
-fprintf('Variable de controle - prix decales: \n');
+fprintf('Variable de controle 3 - prix decales: \n');
 
 disp(strcat(...
 {' C = '},sprintf('%05.3f',C_3_est),...
@@ -392,9 +464,87 @@ fprintf(['La correlation entre X et la variable '...
 %% ~~~~~~~~~~~~~ variable de controle 4 ~~~~~~~~~~~~~~~~ %%
 
 % calculer des option europeenes, mais avec des actions:
-% S = S .*(1 +r*dt + sigma*dW_t );
+% S = S .*(1 +r*dt + sigma*sqrt(S0)*dW_t );
+% sigma et r soient connu ici.
 % alors qu'on puisse calculer leur payoff avec Balckes-Sch.
 
+
+%% ~~~~~~~~~~~~~ variable de controle 5 ~~~~~~~~~~~~~~~~ %%
+
+% comme VC2 mais exp(W_T); W_0 = 0
+% ~~~~~~~~~~~~~~~~ Calculer lambda ~~~~~~~~~~~~~~~~~~~~~~ %
+
+S = S0 * ones(nlambda,1);
+VC = zeros(nlambda, 1);
+X = S/2;
+for i = 2:(n+1)
+    dW_t = normrnd(0, sqrt(dt), nlambda, 1);
+    S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
+    X = X+S;
+    VC = VC + dW_t; 
+    % succesion des petits accroissements du brownien 
+    % => VC et S sont correles
+end
+X = (X - S/2)/n;
+%VC = sign(VC).*exp(abs(VC));
+VC = exp(VC/S0);
+C = exp(-r*T) * max(X-K,0);
+A = cov(C, VC);
+lambda = A(1,2)/A(2,2); 
+
+% en utilisant les est. empiriques
+% comparer avec les moments analytiques? -> voir pdf/VBA
+
+% ~~~~~~~~~~~~~~~~~~~~~ simuler ~~~~~~~~~~~~~~~~~~~~~~~~~ %
+
+tic;
+
+S = S0 * ones(nt,1);
+VC = zeros(nt, 1);
+X = S/2;
+for i = 2:(n+1)
+    dW_t = normrnd(0, sqrt(dt), nt, 1);
+    S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
+    X = X+S;
+    VC = VC + dW_t; 
+    % succesion des petits accroissements du brownien 
+    % => VC et S sont correles
+end
+X = (X - S/2)/n;
+VC = exp(VC/S0);
+%VC = sign(VC).*exp(abs(VC));
+C = exp(-r*T) * max(X-K,0);
+
+Z = C - lambda * (VC - exp(T/(2*S0^2)));
+
+C_5_est = mean(Z);
+C_5_est_var = var(Z)/nt;
+
+C_5_IC_inf = C_5_est + sqrt(C_5_est_var)*norminv(alpha/2);
+C_5_IC_sup = C_5_est + sqrt(C_5_est_var)*norminv(1-alpha/2);
+L = C_5_IC_sup - C_5_IC_inf;
+
+tps = toc;
+
+% fonction d'affichage 
+
+fprintf('\n')
+fprintf('Variable de controle 5 - exp(W_T): \n');
+
+disp(strcat(...
+{' C = '},sprintf('%05.3f',C_5_est),...
+{' IC = ['},sprintf('%05.3f',C_5_IC_inf),...
+{' , '},sprintf('%05.3f',C_5_IC_sup),...
+{'] '},...
+{' largeur = '},sprintf('%05.3f',L),...
+{' t = '},sprintf('%05.3f',tps),...
+{' eff = '},sprintf('%05.3f',L * sqrt(tps))));
+
+p = corr(X, VC); 
+% optimum: lambda =~ corr(X,Y)*(Var(X)/Var(Y))^.5
+% efficace ?
+fprintf(['La correlation entre X et la variable '...
+        'de controle est: %0.5g\n'], p)
 
 %% ~~~~~~~~~~~~~~~~~~~~~ graphes ~~~~~~~~~~~~~~~~~~~~~~~ %%
 
@@ -579,17 +729,23 @@ while G~="q"
         P=P+1; input('\n');
     case 8
         
-        w = 4; % nombre des IC affichees
+        w = 6; % nombre des IC affichees
         %fprintf('< 8: ICs (normales) >')
-        plot([C_est Ca_est C_2_est C_3_est], 1:w, 'x')
+        plot([C_est Ca_est C_1_est C_2_est ...
+              C_3_est C_5_est], ...
+            1:w, 'x')
         %line([K K],[0 5],'Color','green','LineStyle','--')
        
         line([C_IC_inf C_IC_sup],[1 1])
         line([Ca_IC_inf Ca_IC_sup],[2 2])
-        line([C_2_IC_inf C_2_IC_sup],[3 3])
-        line([C_3_IC_inf C_3_IC_sup],[4 4])
+        line([C_1_IC_inf C_1_IC_sup],[3 3])
+        line([C_2_IC_inf C_2_IC_sup],[4 4])
+        line([C_3_IC_inf C_3_IC_sup],[5 5])
+        line([C_5_IC_inf C_5_IC_sup],[6 6])
         
-        legend("estimateurs",'C','C_a','C_{VC2}','C_{VC3}')
+        legend("estimateurs",...
+            'C','C_a','C_{VC1}','C_{VC2}',...
+            'C_{VC3}','C_{VC5}')
         L1 = C_IC_sup - C_IC_inf;
         L2 = C_est - K;
         limf = [C_IC_inf C_IC_sup] + max(L1,L2)*[-1 1];
@@ -597,7 +753,8 @@ while G~="q"
         ylim([0 w+1])
         yticks(1:w)
 
-        yticklabels({'C','C_a','C_{VC2}','C_{VC3}'})
+        yticklabels({'C','C_a','C_{VC1}','C_{VC2}',...
+                     'C_{VC3}','C_{VC5}'})
         %title('Intervalles de confiance (sauf C)')
         
         %P=P+1;
