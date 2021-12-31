@@ -308,6 +308,15 @@ C'est pratique de remplacer la variance par sa contrepartie empirique.
 % sigma et r soient connu ici.
 % alors qu'on puisse calculer leur payoff avec Balckes-Sch.
 
+Là il faut calculer l'espérance, car le suivant est évidemment faux:
+
+\begin{lstlisting}
+E_C_VC = S0;
+for i=2:n
+    E_C_VC = E_C_VC*(1 + r*dt);
+end
+E_C_VC = max(double(E_C_VC-K),0);
+\end{lstlisting}
 
 \subsubsection{Variable de contrôle 5}
 

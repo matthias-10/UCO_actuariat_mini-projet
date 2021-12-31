@@ -467,7 +467,92 @@ fprintf(['La correlation entre X et la variable '...
 % S = S .*(1 +r*dt + sigma*sqrt(S0)*dW_t );
 % sigma et r soient connu ici.
 % alors qu'on puisse calculer leur payoff avec Balckes-Sch.
+% ~~~~~~~~~~~~~~~~ Calculer lambda ~~~~~~~~~~~~~~~~~~~~~~ %
 
+S = S0 * ones(nlambda,1);
+VC = S;
+X = S/2;
+% VC = zeros(nlambda,1);
+for i = 2:(n+1)
+    dW_t = normrnd(0, sqrt(dt), nlambda, 1);
+    S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
+    X = X+S;
+
+    VC = VC .*(1 +r*dt + sigma*sqrt(S0).*dW_t );
+end
+X = (X - S/2)/n;
+%Black-scholes: P_T, w_t = W_T
+% sig_vc = (sigma*sqrt(S0));
+% a=S0*exp(T*(r-0.5*sig_vc^2) + sig_vc*VC);
+% b=VC+S0;
+% apres B-S a=b?
+
+d1 = log(VC/K);
+d2 = d1; % a temps T
+C_VC = S.*normcdf(d1) - K*exp(-r*T).*normcdf(d2);
+
+C = exp(-r*T) * max(X-K,0);
+A = cov(C, C_VC);
+lambda = A(1,2)/A(2,2); 
+
+E_C_VC = S0;
+for i=2:n
+    E_C_VC = E_C_VC*(1 + r*dt);
+end
+E_C_VC = max(double(E_C_VC-K),0);
+
+% ~~~~~~~~~~~~~~~~~~~~~ simuler ~~~~~~~~~~~~~~~~~~~~~~~~~ %
+
+tic;
+
+S = S0 * ones(nt,1);
+X = S/2;
+VC = S;
+
+for i = 2:(n+1)
+    dW_t = normrnd(0, sqrt(dt), nt, 1);
+    S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
+    X = X+S;
+
+    VC = VC .*(1 +r*dt + sigma*sqrt(S0).*dW_t );
+end
+X = (X - S/2)/n;
+
+d1 = log(VC/K);
+d2 = d1; % a temps T
+C_VC = S.*normcdf(d1) - K*exp(-r*T).*normcdf(d2);
+C = exp(-r*T) * max(X-K,0);
+
+Z = C - lambda * (C_VC - mean(C_VC)); %E_C_VC);
+
+C_4_est = mean(Z);
+C_4_est_var = var(Z)/nt;
+
+C_4_IC_inf = C_4_est + sqrt(C_4_est_var)*norminv(alpha/2);
+C_4_IC_sup = C_4_est + sqrt(C_4_est_var)*norminv(1-alpha/2);
+L = C_4_IC_sup - C_4_IC_inf;
+
+tps = toc;
+
+% fonction d'affichage 
+
+fprintf('\n')
+fprintf('Variable de controle 4 - option europeenne: \n');
+
+disp(strcat(...
+{' C = '},sprintf('%05.3f',C_4_est),...
+{' IC = ['},sprintf('%05.3f',C_4_IC_inf),...
+{' , '},sprintf('%05.3f',C_4_IC_sup),...
+{'] '},...
+{' largeur = '},sprintf('%05.3f',L),...
+{' t = '},sprintf('%05.3f',tps),...
+{' eff = '},sprintf('%05.3f',L * sqrt(tps))));
+
+p = corr(C, C_VC); 
+% optimum: lambda =~ corr(X,Y)*(Var(X)/Var(Y))^.5
+% efficace ?
+fprintf(['La correlation entre X et la variable '...
+        'de controle est: %0.5g\n'], p)
 
 %% ~~~~~~~~~~~~~ variable de controle 5 ~~~~~~~~~~~~~~~~ %%
 
@@ -545,6 +630,15 @@ p = corr(X, VC);
 % efficace ?
 fprintf(['La correlation entre X et la variable '...
         'de controle est: %0.5g\n'], p)
+
+
+%% ~~~~~~~~~~~~~ variable de controle 6 ~~~~~~~~~~~~~~~~ %%
+
+% calculer des option asiatiques, mais avec des actions:
+% S = S .*(1 +r*dt + sigma*sqrt(S0)*dW_t );
+% sigma et r soient connu ici.
+% alors qu'on puisse calculer leur payoff avec Balckes-Sch.
+
 
 %% ~~~~~~~~~~~~~~~~~~~~~ graphes ~~~~~~~~~~~~~~~~~~~~~~~ %%
 
@@ -729,10 +823,10 @@ while G~="q"
         P=P+1; input('\n');
     case 8
         
-        w = 6; % nombre des IC affichees
+        w = 7; % nombre des IC affichees
         %fprintf('< 8: ICs (normales) >')
         plot([C_est Ca_est C_1_est C_2_est ...
-              C_3_est C_5_est], ...
+              C_3_est C_4_est C_5_est], ...
             1:w, 'x')
         %line([K K],[0 5],'Color','green','LineStyle','--')
        
@@ -741,11 +835,12 @@ while G~="q"
         line([C_1_IC_inf C_1_IC_sup],[3 3])
         line([C_2_IC_inf C_2_IC_sup],[4 4])
         line([C_3_IC_inf C_3_IC_sup],[5 5])
-        line([C_5_IC_inf C_5_IC_sup],[6 6])
+        line([C_4_IC_inf C_4_IC_sup],[6 6])
+        line([C_5_IC_inf C_5_IC_sup],[7 7])
         
         legend("estimateurs",...
             'C','C_a','C_{VC1}','C_{VC2}',...
-            'C_{VC3}','C_{VC5}')
+            'C_{VC3}','C_{VC4}','C_{VC5}')
         L1 = C_IC_sup - C_IC_inf;
         L2 = C_est - K;
         limf = [C_IC_inf C_IC_sup] + max(L1,L2)*[-1 1];
@@ -754,7 +849,7 @@ while G~="q"
         yticks(1:w)
 
         yticklabels({'C','C_a','C_{VC1}','C_{VC2}',...
-                     'C_{VC3}','C_{VC5}'})
+                     'C_{VC3}','C_{VC4}','C_{VC5}'})
         %title('Intervalles de confiance (sauf C)')
         
         %P=P+1;
