@@ -13,6 +13,10 @@
   + montrer que les estimateurs sont non-biaisés
   + détailler les différences entre X_inf et X_N
 * sauvegarder des capture de l'écran du dashboard, des graphiques génerés, de VBA, et du code output
+* ajouter curseur pour les paramètres du dashboard
+* il faut que le tic toc inclus le calcul du lambda
+* VC: p-lambda(VC1 - E[VC1])-eta(VC2 - E[VC2]) -- lambda/eta comme coeff. de régresssion
+* `exp(lambda*M_t-lambda^2/2<M,M>_t)` = martingale => cela sert à calculer l'espérance
 
 
 *** 
