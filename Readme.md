@@ -7,11 +7,14 @@
     + VC avec C au lieu de X
 * mettre à jour la partie plots de matlab
 * le rapport
-  + parmi autres:
+  + les bases mathématiques (voir le cours)
+  + la méthode de trapezes
   + décrire les résultats et les graphiques (Nd=8 ~ 40j, t=[0,1], nt = 1000, S0 = 40, r=.05, S1=42, K=41)
   + décrire la fonctionalité des programmes (integrale methode des trapezes, simulation pas a pas, fonctionalité de X_N)
+  + décrire les VC
   + montrer que les estimateurs sont non-biaisés
   + détailler les différences entre X_inf et X_N
+  + ajouter des graphiques mis á jour
 * sauvegarder des capture de l'écran du dashboard, des graphiques génerés, de VBA, et du code output
 * ajouter curseur pour les paramètres du dashboard
 * il faut que le tic toc inclus le calcul du lambda
