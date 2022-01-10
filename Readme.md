@@ -19,8 +19,12 @@
 * ajouter curseur pour les paramètres du dashboard
 * il faut que le tic toc inclus le calcul du lambda
 * VC: p-lambda(VC1 - E[VC1])-eta(VC2 - E[VC2]) -- lambda/eta comme coeff. de régresssion
-* `exp(lambda*M_t-lambda^2/2<M,M>_t)` = martingale => cela sert à calculer l'espérance
+* Data Validation
+* Protect, Protect Shee, Allow Edit Range, Formatting
+* hide formula bar
 
+* `exp(lambda*M_t-lambda^2/2<M,M>_t)` = martingale => cela sert à calculer l'espérance
+* anti-feature VBA: calculer Var/Cov dure très longtemps pour les VC
 
 *** 
 
