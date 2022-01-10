@@ -23,6 +23,7 @@
 * `exp(lambda*M_t-lambda^2/2<M,M>_t)` = martingale => cela sert à calculer l'espérance
 * anti-feature VBA: calculer Var/Cov dure très longtemps pour les VC
 
+VC_2: Variance de la VC = T
 *** 
 
 Quéstion:
