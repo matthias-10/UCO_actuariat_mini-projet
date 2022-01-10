@@ -1,10 +1,7 @@
 ## à faire
 
 * mettre à jour le VBA
-    + copier le VBA_Script.txt dans le .xlsm
-    + VC a une variance fausse: remplacer par sigma2/n^2
-    + `C_N` est faux, la méthode de trapezes n'applique pas; `C_inf != C_N`
-    + VC avec C au lieu de X
+    + il y a des problèmes par rapport aux VC: les ICs sont trop grandes quand on joue avec K
 * mettre à jour la partie plots de matlab
 * le rapport
   + les bases mathématiques (voir le cours)
