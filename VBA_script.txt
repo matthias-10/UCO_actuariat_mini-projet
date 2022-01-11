@@ -5,6 +5,7 @@ Public S0, k, r, sigma, T As Double
 
 Sub Macro1()
 
+ActiveSheet.Unprotect
 
 ' worksheets
 Dim sh_dash, sh_traj, sh_ic As String
@@ -415,7 +416,7 @@ For j = 1 To n_lambda
     Y(j) = Y(j) - 0.5 * e / n
 Next
 C = payoff(X)
-MsgBox Cov(C, Y)
+'MsgBox Cov(C, Y)
 EY = S0
 sigma2_Y = T / 6 * (2 * n * n + 3 * n + 1) / (n * n)
 lambda = Cov(C, Y) / Sqr(sigma2_Y)
@@ -520,7 +521,7 @@ For j = 1 To 200
     Y(j) = f ' = W_T
 Next
 C = payoff(X)
-MsgBox Cov(C, Y)
+'MsgBox Cov(C, Y)
 EY = S0
 sigma2_Y = T
 lambda = Cov(C, Y) / sigma2_Y
@@ -689,6 +690,8 @@ For Each chart_shp In ActiveSheet.Shapes
 Next chart_shp
 
 Range("D17").Select
+ActiveSheet.Protect DrawingObjects:=True, Contents:=True, Scenarios:=True
+
 MsgBox "Simulation finie pour " & nt & " trajectoires.", vbInformation
 'MsgBox chartrange.Address
 
