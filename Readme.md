@@ -2,6 +2,8 @@
 
 * mettre à jour le VBA
     + il y a des problèmes par rapport aux VC: les ICs sont trop grandes quand on joue avec K
+    + les IC sont en général trop grandes
+    + lambda de VC_1 pour K bas haut
 * mettre à jour la partie plots de matlab
 * le rapport
   + les bases mathématiques (voir le cours)
