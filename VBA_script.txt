@@ -17,8 +17,6 @@ Set sh_dash_o = Worksheets(sh_dash)
 
 ' ~~~~~~~~~~ parametres ~~~~~~~~~~
 
-
-
 S0 = Range("S0_").Value
 k = Range("K_").Value
 
@@ -39,6 +37,8 @@ dt = T / n
 Dim tps_debut, tps_passe As Double
 Dim n_aff As Integer
 n_aff = 10 'nombre des trajectoires affichees dans le graphique
+Dim n_lambda As Integer
+n_lambda = 200 'nombre des trajectoires utilisees pour calculer lambda
 
 ' premier cellule de la table de trajectoires ~ t0
 Dim Srow, Scol As Integer
@@ -51,7 +51,7 @@ Scol = 9
 Dim i, j, l As Integer
 
 ' array pour enregistrer les simulations
-Dim X() As Double 'for some reason double arrays must be defined one by one, else they are variant
+Dim X() As Double
 Dim X_N() As Double
 Dim C() As Double
 
@@ -73,12 +73,6 @@ For j = 1 To n
     temps(j) = temps(j - 1) + dt
 Next
 
-'MsgBox temps(0)
-'MsgBox temps(1)
-'MsgBox temps(n)
-'MsgBox Application.CountA(temps)
-'MsgBox UBound(temps)
-
 Sheets(sh_traj).Range("A3:A" & UBound(temps) + 3) = _
     WorksheetFunction.Transpose(temps)
 
@@ -91,8 +85,7 @@ Sheets(sh_traj).Range("A3:A" & UBound(temps) + 3) = _
 For j = 1 To n_aff
     i = 1
     a = S0
-    
-    
+     
     'If j <= n_aff Then
         Sheets(sh_traj).Cells(Srow - 1 + i, Scol - 1 + j).Value = a
     'End If
@@ -119,7 +112,6 @@ b = S0
 e = S0
 f = S0
 
-
 i = 1
 Sheets(sh_traj).Cells(Srow - 1 + i, 2).Value = a
 Sheets(sh_traj).Cells(Srow - 1 + i, 3).Value = b
@@ -127,7 +119,7 @@ Sheets(sh_traj).Cells(Srow - 1 + i, 4).Value = e
 Sheets(sh_traj).Cells(Srow - 1 + i, 5).Value = f
 
 For i = 2 To n + 1
-    'simuler une v.a. normale
+    'simuler une v.a. normale * écart-type dt
     dW = Sqr(-2 * Log(Rnd())) * _
          Cos(6.283185307 * Rnd()) * Sqr(dt)
     
@@ -164,11 +156,11 @@ For j = 1 To nt
     a = S0
     X(j) = 0.5 * a / n
     
-    
     For i = 2 To n + 1
         'simuler une v.a. normale
         dW = Sqr(-2 * Log(Rnd())) * _
              Cos(6.283185307 * Rnd()) * Sqr(dt)
+        a = Abs(a)
         a = a * (1 + (r * dt + sigma * Sqr(a) * dW))
         X(j) = X(j) + a / n
               
@@ -216,12 +208,13 @@ For j = 1 To nt
     l = 1
     i = 1
     a = S0
-    X_N(j) = 0.5 * a / Nd 'c'est faux, non?
+    'X_N(j) = 0.5 * a / Nd
     
     For i = 1 To n
         'simuler une v.a. normale
         dW = Sqr(-2 * Log(Rnd())) * _
              Cos(6.283185307 * Rnd()) * Sqr(dt)
+        a = Abs(a)
         a = a * (1 + (r * dt + sigma * Sqr(a) * dW))
         
         If (i / n) > (l / Nd) Then
@@ -231,7 +224,8 @@ For j = 1 To nt
         
     Next
     
-    X_N(j) = X_N(j) + 0.5 * a / Nd 'c'est faux, non?
+    X_N(j) = X_N(j) + a / Nd
+    'X_N(j) = X_N(j) + 0.5 * a / Nd 'c'est faux, non?
     ' pas pour S0, seulement a la fin:  X_N(j) = X_N(j) + a/Nd
 
 Next
@@ -280,10 +274,11 @@ For j = 1 To nt
         'simuler une v.a. normale
         dW = Sqr(-2 * Log(Rnd())) * _
              Cos(6.283185307 * Rnd()) * Sqr(dt)
-        
+        a = Abs(a)
         a = a * (1 + (r * dt + sigma * Sqr(a) * dW))
         X(j) = X(j) + a / n
         
+        b = Abs(b)
         b = b * (1 + (r * dt - sigma * Sqr(b) * dW))
         X_anti(j) = X_anti(j) + b / n
 
@@ -309,12 +304,13 @@ C = payoff(X)
 
 Z_mu = (Mean(C_anti) + Mean(C)) / 2
 
+'Variance
 Dim SumSq As Double
 SumSq = 0
 For i = 1 To nt
         SumSq = SumSq + (C_anti(i) - Z_mu) ^ 2 + (C(i) - Z_mu) ^ 2
 Next i
-Z_std = SumSq / (2 * nt - 1)
+Z_std = Sqr(SumSq / (2 * nt - 1))
 
 Z_mu_b = Z_mu - 1.96 * Z_std / Sqr(2 * nt)
 Z_mu_h = Z_mu + 1.96 * Z_std / Sqr(2 * nt)
@@ -346,6 +342,7 @@ For j = 1 To nt
         'simuler une v.a. normale
         dW = Sqr(-2 * Log(Rnd())) * _
              Cos(6.283185307 * Rnd()) * Sqr(dt)
+        a = Abs(a)
         a = a * (1 + (r * dt + sigma * Sqr(a) * dW))
         X(j) = X(j) + a / n
         
@@ -382,27 +379,29 @@ ReDim X(1 To nt)
 ReDim C(1 To nt)
 
 '~~~~~~~~~~~~~~~~ X_VC_1 ~~~~~~~~~~~~~~~~
-    
+
+Dim EY, lambda, sigma2_Y As Double
 Dim Y() As Double
-ReDim Y(1 To nt)
-Dim Z() As Double
-ReDim Z(1 To nt)
+ReDim X(1 To n_lambda)
+ReDim Y(1 To n_lambda)
+ReDim C(1 To n_lambda)
 
 tps_debut = Timer
 
-For j = 1 To nt
+'calculer lambda
+For j = 1 To n_lambda
     a = S0
     e = S0
     X(j) = 0.5 * a / n
     Y(j) = 0.5 * e / n
-    i = 1
-    
+
     For i = 2 To n + 1
         'simuler une v.a. normale
         dW = Sqr(-2 * Log(Rnd())) * _
              Cos(6.283185307 * Rnd()) * Sqr(dt)
         
         'comme X_inf
+        a = Abs(a)
         a = a * (1 + (r * dt + sigma * Sqr(a) * dW))
         X(j) = X(j) + a / n
         
@@ -410,6 +409,46 @@ For j = 1 To nt
         e = e + dW
         Y(j) = Y(j) + e / n
         
+    Next
+    
+    X(j) = X(j) - 0.5 * a / n
+    Y(j) = Y(j) - 0.5 * e / n
+Next
+C = payoff(X)
+MsgBox Cov(C, Y)
+EY = S0
+sigma2_Y = T / 6 * (2 * n * n + 3 * n + 1) / (n * n)
+lambda = Cov(C, Y) / Sqr(sigma2_Y)
+'avant j'ai mis S0*T, pourquoi ?
+'MsgBox sigma2_Y
+'MsgBox "le lambda de VC_1 = " & lambda
+'MsgBox "le rho_XY =" & Cov(X, Y) / (StdDev(X) * Sqr(sigma2_Y))
+
+ReDim X(1 To nt)
+ReDim Y(1 To nt)
+ReDim C(1 To nt)
+Dim Z() As Double
+ReDim Z(1 To nt)
+
+For j = 1 To nt
+    a = S0
+    e = S0
+    X(j) = 0.5 * a / n
+    Y(j) = 0.5 * e / n
+
+    For i = 2 To n + 1
+        'simuler une v.a. normale
+        dW = Sqr(-2 * Log(Rnd())) * _
+             Cos(6.283185307 * Rnd()) * Sqr(dt)
+        
+        'comme X_inf
+        a = Abs(a)
+        a = a * (1 + (r * dt + sigma * Sqr(a) * dW))
+        X(j) = X(j) + a / n
+        
+        'VC
+        e = e + dW
+        Y(j) = Y(j) + e / n
         
     Next
     
@@ -417,46 +456,28 @@ For j = 1 To nt
     Y(j) = Y(j) - 0.5 * e / n
 Next
 
-'Problematique: Les X et Y ne sont pas independant en utilisant le meme processus?
 
 ' ~~~~~~~~~~~
 ' estimateurs
 '~~~~~~~~~~~~
-'Non overlapping increments Wt-Ws and Wv-Wu for any 0=s<t=>u<v are independent of each other.
 
-Dim lambda As Double
-
-'E(Y) = S0
-' lambda = Cov/sigma_Y^2
-' Cov estime
-' sigma_Y ?
-' Var(Y) ~ Var(somme de mouv. brown) = E(somme(dw)^2) - E^2(somme(dw)) ? E[ int(dW^2) ]
-'=T/6(2n^2+3n+1)
-
-'je suppose que ca dure tres longtemps, calculer lambda
-' idee: calculer lambda, puis le fixer
-
-tps_passe = Timer - tps_debut
-Dim sigma2_Y As Double
-sigma2_Y = (T / 6 * (2 * (n * n) + 3 * n + 1))
-lambda = Cov(X, Y) / Sqr(sigma2_Y)
-MsgBox "le lambda de VC_1 = " & lambda
-MsgBox "le rho_XY =" & Cov(X, Y) / (StdDev(X) * Sqr(sigma2_Y))
-tps_debut = Timer
+C = payoff(X)
 
 For i = LBound(Z) To UBound(Z)
-    Z(i) = X(i) - lambda * (Y(i) - S0 * T)
+    Z(i) = C(i) - lambda * (Y(i) - EY)
 Next
 
-C = payoff(Z)
+'C = payoff(Z)
 
-C_mu = Mean(C)
-C_std = StdDev(C)
+C_mu = Mean(Z)
+C_std = StdDev(Z)
+'MsgBox C_std
+'MsgBox StdDev(C)
 
 C_mu_b = C_mu - 1.96 * C_std / Sqr(nt)
 C_mu_h = C_mu + 1.96 * C_std / Sqr(nt)
 
-tps_passe = Round(tps_passe + tps_debut - Timer, 3)
+tps_passe = Round(Timer - tps_debut, 3)
 
 'affichage
 Sheets(sh_ic).Range("A6").Value = "VC_1"
@@ -468,6 +489,11 @@ Sheets(sh_ic).Range("E6").Value = tps_passe
 
 '~~~~~~~~~~~~~~~~ X_VC_2 ~~~~~~~~~~~~~~~~
 
+ReDim X(1 To n_lambda)
+ReDim Y(1 To n_lambda)
+ReDim C(1 To n_lambda)
+
+tps_debut = Timer
 'calculer lambda avec n=200
 For j = 1 To 200
     a = S0
@@ -475,12 +501,13 @@ For j = 1 To 200
     X(j) = 0.5 * a / n
 
     i = 1
-    For i = 1 To n
+    For i = 2 To n + 1
         'simuler une v.a. normale
         dW = Sqr(-2 * Log(Rnd())) * _
              Cos(6.283185307 * Rnd()) * Sqr(dt)
         
         'comme X_inf
+        a = Abs(a)
         a = a * (1 + (r * dt + sigma * Sqr(a) * dW))
         X(j) = X(j) + a / n
         
@@ -490,63 +517,61 @@ For j = 1 To 200
     Next
     
     X(j) = X(j) - 0.5 * a / n
-    Y(j) = f
+    Y(j) = f ' = W_T
 Next
-
-Dim EY As Double
+C = payoff(X)
+MsgBox Cov(C, Y)
 EY = S0
-
 sigma2_Y = T
-lambda = Cov(X, Y) / sigma2_Y
+lambda = Cov(C, Y) / sigma2_Y
 
-MsgBox "le lambda de VC_2 = " & lambda
-MsgBox "le rho_XY =" & Cov(X, Y) / (StdDev(X) * Sqr(sigma2_Y))
+'MsgBox "le lambda de VC_2 = " & lambda
+'MsgBox "le rho_XY =" & Cov(X, Y) / (StdDev(X) * Sqr(sigma2_Y))
 
 'Puis simuler les trajectoires et la variable de controle
-tps_debut = Timer
+
+ReDim X(1 To nt)
+ReDim Y(1 To nt)
+ReDim C(1 To nt)
 
 For j = 1 To nt
     a = S0
     f = S0
     X(j) = 0.5 * a / n
-    'Y(j) = 0.5 * e / n
     i = 1
     
-    For i = 1 To n
+    For i = 2 To n + 1
         'simuler une v.a. normale
         dW = Sqr(-2 * Log(Rnd())) * _
              Cos(6.283185307 * Rnd()) * Sqr(dt)
         
         'comme X_inf
+        a = Abs(a)
         a = a * (1 + (r * dt + sigma * Sqr(a) * dW))
         X(j) = X(j) + a / n
         
         'VC
         f = f + dW
-        'Y(j) = Y(j) + f / n
-        
         
     Next
     
     X(j) = X(j) - 0.5 * a / n
-    'Y(j) = Y(j) - 0.5 * f / n
     Y(j) = f
 Next
-
+C = payoff(X)
 
 ' ~~~~~~~~~~~
 ' estimateurs
 '~~~~~~~~~~~~
-
-
+'MsgBox lambda
 For i = LBound(Z) To UBound(Z)
-    Z(i) = X(i) - lambda * (Y(i) - EY)
+    Z(i) = C(i) - lambda * (Y(i) - EY)
 Next
 
-C = payoff(Z)
+'C = payoff(Z)
 
-C_mu = Mean(C)
-C_std = StdDev(C)
+C_mu = Mean(Z)
+C_std = StdDev(Z)
 
 C_mu_b = C_mu - 1.96 * C_std / Sqr(nt)
 C_mu_h = C_mu + 1.96 * C_std / Sqr(nt)
@@ -631,7 +656,6 @@ With Graphe.Chart
     .ChartColor = 11
 End With
 
-'If False Then
 ' ~~~~~~~~~~~~~~~~
 ' affichage IC
 ' ~~~~~~~~~~~~~~~~
@@ -642,7 +666,7 @@ Set Graphe_IC = sh_dash_o.ChartObjects.Add( _
 
 With Graphe_IC.Chart
 'Shapes.AddChart2(201, xlColumnClustered).Select
-    .SetSourceData Source:=Range("IC!$A$2:$D$8")
+    .SetSourceData Source:=Range("IC!$A$2:$D$7") '$8 pour C_N
     .FullSeriesCollection(1).ChartType = xlColumnClustered
     .FullSeriesCollection(1).AxisGroup = 1
     .FullSeriesCollection(2).ChartType = xlColumnClustered
@@ -653,6 +677,8 @@ With Graphe_IC.Chart
     .FullSeriesCollection(3).ChartType = xlXYScatter
     .FullSeriesCollection(3).AxisGroup = 1
     .FullSeriesCollection(1).AxisGroup = 1
+    .Axes(xlValue).MinimumScale = Application.WorksheetFunction.RoundDown( _
+       WorksheetFunction.Min(Worksheets(sh_ic).Range("IC!$B$2:$B$7")) * 0.95, 1)
     .Legend.Delete
     .ChartColor = 11
 End With
@@ -695,16 +721,17 @@ Function StdDev(Arr() As Double)
 End Function
 
 Function Cov(Arr1() As Double, Arr2() As Double)
+    Dim l, i As Integer
     ' faudra verifier que les deux Arr ont les meme dimensions
-    Dim i As Integer
+    l = Application.CountA(Arr1)
     Dim avg1, avg2, SumSq As Double
     'k = Application.CountA(Arr1)
     avg1 = Mean(Arr1)
     avg2 = Mean(Arr2)
-    For i = 1 To nt
+    For i = 1 To l
         SumSq = SumSq + (Arr1(i) - avg1) * (Arr2(i) - avg2)
     Next i
-    Cov = SumSq / (nt - 1)
+    Cov = SumSq / (l - 1)
 
 End Function
 
