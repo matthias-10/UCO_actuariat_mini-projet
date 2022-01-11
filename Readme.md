@@ -4,6 +4,7 @@
     + il y a des problèmes par rapport aux VC: les ICs sont trop grandes quand on joue avec K
     + les IC sont en général trop grandes
     + lambda de VC_1 pour K bas haut
+    + pour un K trop élevé c'est clair, pcq Cov(C, VC) est preque 0. Mais pour un K très petit il me semble que la Covariance croisse plus vite.
 * mettre à jour la partie plots de matlab
 * le rapport
   + les bases mathématiques (voir le cours)
