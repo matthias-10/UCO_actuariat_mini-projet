@@ -1,5 +1,6 @@
 ## à faire
 * mettre à jour la partie plots de matlab
+* nettoyer l'affichage de matlab
 * le rapport
   + les bases mathématiques (voir le cours)
   + la méthode de trapezes
@@ -9,6 +10,7 @@
   + montrer que les estimateurs sont non-biaisés
   + détailler les différences entre X_inf et X_N
   + ajouter des graphiques mis á jour
+  + ajouter l'affichage des scriptes
 * sauvegarder des capture de l'écran du dashboard, des graphiques génerés, de VBA, et du code output
 
 * VC: p-lambda(VC1 - E[VC1])-eta(VC2 - E[VC2]) -- lambda/eta comme coeff. de régresssion
