@@ -1,13 +1,14 @@
 ## à faire
 * mettre à jour la partie plots de matlab
 * nettoyer l'affichage de matlab
+* en matlab: VC 4 nécessite son espérance !
 * le rapport
   + les bases mathématiques (voir le cours)
   + la méthode de trapezes
   + décrire les résultats et les graphiques (Nd=8 ~ 40j, t=[0,1], nt = 1000, S0 = 40, r=.05, S1=42, K=41)
   + décrire la fonctionalité des programmes (integrale methode des trapezes, simulation pas a pas, fonctionalité de X_N)
   + décrire les VC
-  + montrer que les estimateurs sont non-biaisés
+  + montrer que les estimateurs des VCs sont non-biaisés
   + détailler les différences entre X_inf et X_N
   + ajouter des graphiques mis á jour
   + ajouter l'affichage des scriptes
