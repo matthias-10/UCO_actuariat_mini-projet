@@ -13,16 +13,53 @@
   + ajouter des graphiques mis á jour
   + ajouter l'affichage des scriptes
 * sauvegarder des capture de l'écran du dashboard, des graphiques génerés, de VBA, et du code output
-
-* VC: p-lambda(VC1 - E[VC1])-eta(VC2 - E[VC2]) -- lambda/eta comme coeff. de régresssion
-
-* `exp(lambda*M_t-lambda^2/2<M,M>_t)` = martingale => cela sert à calculer l'espérance
 * anti-feature VBA: calculer Var/Cov dure très longtemps pour les VC
 * feature Excel Dashboard: Sheet and Workbook protected, conditional formating, data validation, curseur
 
 VC_2: Variance de la VC = T
-*** 
 
-Quéstion:
+## messages à Valentin 11-12.01.2022
 
-* A-t-on dit que la variable de contrôle doit être indépendant de X ?
+***
+
+Variable de contrôle 5
+
+
+$\mathrm{e}^{\frac{W_T}{S_0}}$, avec $W_0 = 0$.
+
+\begin{align*}
+
+\mathbb{E}[ \mathrm{e}^{\frac{W_T}{S_0}} ] = 
+\mathrm{e}^{\mathbb{E}[\frac{W_T}{S_0}}] + 0.5 Var(\frac{W_T}{S_0}})} = 
+\mathrm{e}^{0 +  \frac{1}{2S_0^2}Var(W_T)} =
+\mathrm{e}^{\frac{T}{2S_0^2}} =
+
+\end{align*}
+
+***
+
+VC 6 on peut l'effacer.
+VC 3 est à toi à prouver l'ésperance, mais c'est facile.
+
+* pour X_prime il y avait une erreur, le boucle ligne 110: for i = 2:(n+1)
+* quelque part c'est écrit "simules" pourtant il fallait "simulees"
+* les explications pourquoi X_N est plus grand que X_inf sont faites avec la courbe continu et les bornes pour [1*n/N, 2*n/N, ...], qui dépassent toujours la courbe si bien elle monte.
+* est-ce que tu peux vérifier et implémenter les résulats suivants? Merci
+
+*
+
+Variable de contrôle 4
+
+
+On se met dans le modèle Black-Scholes, et on a choisi comme Variable de Contrôle 6 le payoff d'une option d'achat avec la diffusion $dS_t = S_t(rdt + \sigma sqrt{S_0} dW_t$, qui est très pareil à la diffusion donnée dans le sujet.
+On peut utiliser le modèle Black-Scholes avec $\beta_{BS} = r$ et $\sigma_{BS} = \sigma sqrt{S_0}$ (les indices indiquent les variables du modèle comme vu dans le cours).
+Il n'est même pas nécessaire d'utiliser le théorème de Girsanov, car on sait déjà que $W_t$ est un mouvement brownien.
+Alors $C_0 = \mathbb{E}[ \mathrm{e}^{-rT} C_T ]$.
+
+% Ici on peut ajouter bcp de trucs de III Formule de valorisation en temps continu et suivant
+
+Donc $S_T = S_0 \mathrm{e}^{(r-\frac{\sigma^2 S_0}{2})T + \sigma sqrt{S_0} W_T}$
+
+% Dans le code il fallait sauvegarder dans le boucle aussi W_T comme en VC 2 (ligne 293).
+% en code matlab lignes 484 et 529: 
+% E_C_VC = S0 * exp((r-0.5*sigma^2*S0)T + sigma*sqrt(S0)*W_T)
