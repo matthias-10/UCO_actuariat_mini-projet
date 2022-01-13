@@ -75,17 +75,17 @@ layout(c(1,2))
 
 # la loi de distribution de S_T
 X = rnorm(100000)*sqrt(5)+S_T
-hist(X,breaks= 100, freq= F)
-abline(v=mean(X), col="red")
-text( S_T-5, 0.13, col= "red", 
-      label= paste( "mean_X = ", round(mean(X),1)))
+hist(X-K,breaks= 100, freq= F, main = "histogramm de X-K")
+abline(v=mean(X-K), col="red")
+text( -3, 0.13, col= "red", 
+      label= paste( "mean_X = ", round(mean(X-K),1)))
 
 # la loi de distribution de C_T
-C = ifelse(X > K, X, K)
-hist(C, breaks=100, freq= F)
+C = ifelse(X > K, X-K, 0)
+hist(C, breaks=100, freq= F, main = "histogramm de (X-K)^+")
 abline(v=mean(C), col="red")
 text(mean(C)+2, 0.2,col="red", 
      labels = paste("mean_C = ", round(mean(C),1)) )
 ```
-![image](https://user-images.githubusercontent.com/66843529/149397170-f3d8bcd9-b2ff-41c4-ab62-d54395256b93.png)
+![image](https://user-images.githubusercontent.com/66843529/149398000-d2854a89-1a6f-447c-996f-a89268fb3a10.png)
 
