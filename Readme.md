@@ -75,12 +75,13 @@ layout(c(1,2))
 
 # la loi de distribution de S_T
 X = rnorm(100000)*sqrt(5)+S_T
-hist(X,breaks= 100)
+hist(X,breaks= 100, freq= F)
 abline(v=mean(X), col="red")
 
 # la loi de distribution de C_T
 C = ifelse(X > K, X, K)
-hist(C, breaks=100)
+hist(C, breaks=100, freq= F)
 abline(v=mean(C), col="red")
+text(mean(C)+0.6, 0.5,col="red", labels = "mean")
 ```
 
