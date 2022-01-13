@@ -68,24 +68,25 @@ Donc $S_T = S_0 \mathrm{e}^{(r-\frac{\sigma^2 S_0}{2})T + \sigma sqrt{S_0} W_T}$
 
 R
 ```
-S_T = 50
+E_S_T = 50
 K = 46.5
 
 layout(c(1,2))
 
 # la loi de distribution de S_T
-X = rnorm(100000)*sqrt(5)+S_T
-hist(X-K,breaks= 100, freq= F, main = "histogramm de X-K")
+X = rnorm(100000)*sqrt(5)+E_S_T
+hist(X-K,breaks= 100, freq= F, main = "histogramm de S_T - K", xlim = c(-3,10), ylim = c(0,0.6))
 abline(v=mean(X-K), col="red")
-text( -3, 0.13, col= "red", 
-      label= paste( "mean_X = ", round(mean(X-K),1)))
+text( -1, 0.13, col= "red", 
+      label= paste( "mean(S_T - K) = ", round(mean(X-K),1)))
 
 # la loi de distribution de C_T
 C = ifelse(X > K, X-K, 0)
-hist(C, breaks=100, freq= F, main = "histogramm de (X-K)^+")
+hist(C, breaks=100, freq= F, main = "histogramm de (S_T - K)^+", xlim = c(-3,10), ylim = c(0,0.6))
 abline(v=mean(C), col="red")
 text(mean(C)+2, 0.2,col="red", 
-     labels = paste("mean_C = ", round(mean(C),1)) )
+     labels = paste("mean(C) = ", round(mean(C),1)) )
+
 ```
-![image](https://user-images.githubusercontent.com/66843529/149398000-d2854a89-1a6f-447c-996f-a89268fb3a10.png)
+![image](https://user-images.githubusercontent.com/66843529/149406038-9953c24f-68cb-4ba8-b9c3-536ac8ae5ace.png)
 
