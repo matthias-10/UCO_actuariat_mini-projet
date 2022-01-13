@@ -51,7 +51,7 @@ VC 3 est à toi à prouver l'ésperance, mais c'est facile.
 Variable de contrôle 4
 
 
-On se met dans le modèle Black-Scholes, et on a choisi comme Variable de Contrôle 6 le payoff d'une option d'achat avec la diffusion $dS_t = S_t(rdt + \sigma sqrt{S_0} dW_t$, qui est très pareil à la diffusion donnée dans le sujet.
+On se met dans le modèle Black-Scholes, et on a choisi comme Variable de Contrôle 4 le payoff d'une option d'achat avec la diffusion $dS_t = S_t(rdt + \sigma sqrt{S_0} dW_t$, qui est très pareil à la diffusion donnée dans le sujet.
 On peut utiliser le modèle Black-Scholes avec $\beta_{BS} = r$ et $\sigma_{BS} = \sigma sqrt{S_0}$ (les indices indiquent les variables du modèle comme vu dans le cours).
 Il n'est même pas nécessaire d'utiliser le théorème de Girsanov, car on sait déjà que $W_t$ est un mouvement brownien.
 Alors $C_0 = \mathbb{E}[ \mathrm{e}^{-rT} C_T ]$.
@@ -63,3 +63,24 @@ Donc $S_T = S_0 \mathrm{e}^{(r-\frac{\sigma^2 S_0}{2})T + \sigma sqrt{S_0} W_T}$
 % Dans le code il fallait sauvegarder dans le boucle aussi W_T comme en VC 2 (ligne 293).
 % en code matlab lignes 484 et 529: 
 % E_C_VC = S0 * exp((r-0.5*sigma^2*S0)T + sigma*sqrt(S0)*W_T)
+
+***
+
+R
+```
+S_T = 50
+K = 47
+
+layout(c(1,2))
+
+# la loi de distribution de S_T
+X = rnorm(100000)*sqrt(5)+S_T
+hist(X,breaks= 100)
+abline(v=mean(X), col="red")
+
+# la loi de distribution de C_T
+C = ifelse(X > K, X, K)
+hist(C, breaks=100)
+abline(v=mean(C), col="red")
+```
+
