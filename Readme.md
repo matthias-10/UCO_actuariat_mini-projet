@@ -69,7 +69,7 @@ Donc $S_T = S_0 \mathrm{e}^{(r-\frac{\sigma^2 S_0}{2})T + \sigma sqrt{S_0} W_T}$
 R
 ```
 S_T = 50
-K = 47
+K = 46.5
 
 layout(c(1,2))
 
@@ -77,11 +77,15 @@ layout(c(1,2))
 X = rnorm(100000)*sqrt(5)+S_T
 hist(X,breaks= 100, freq= F)
 abline(v=mean(X), col="red")
+text( S_T-5, 0.13, col= "red", 
+      label= paste( "mean_X = ", round(mean(X),1)))
 
 # la loi de distribution de C_T
 C = ifelse(X > K, X, K)
 hist(C, breaks=100, freq= F)
 abline(v=mean(C), col="red")
-text(mean(C)+0.6, 0.5,col="red", labels = "mean")
+text(mean(C)+2, 0.2,col="red", 
+     labels = paste("mean_C = ", round(mean(C),1)) )
 ```
+![image](https://user-images.githubusercontent.com/66843529/149397170-f3d8bcd9-b2ff-41c4-ab62-d54395256b93.png)
 
