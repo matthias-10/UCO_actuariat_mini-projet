@@ -68,6 +68,7 @@ Alors E(VC_4) = E(C_0) = E[exp(-rT)*max(S_T - K, 0)] ~ exp(-rT)*max(E[S_T] - K, 
 Donc la distribution est connu, on peut faire en sorte, par exemple: 
 E(C_0) = exp(-rT)( max(E[S_T] - K, 0) - \int_{-inf}^K f(S_T) * (S_T - K) )
 
+Make a warning that shows or stops VC 4 if (S_T - K)/Var(S_T) < 2
 ***
 
 R
