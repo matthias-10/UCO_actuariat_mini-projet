@@ -64,6 +64,10 @@ Donc $S_T = S_0 \mathrm{e}^{(r-\frac{\sigma^2 S_0}{2})T + \sigma sqrt{S_0} W_T}$
 % en code matlab lignes 484 et 529: 
 % E_C_VC = S0 * exp((r-0.5*sigma^2*S0)T + sigma*sqrt(S0)*W_T)
 
+Alors E(VC_4) = E(C_0) = E[exp(-rT)*max(S_T - K, 0)] ~ exp(-rT)*max(E[S_T] - K, 0), si S_T assez plus grand que K. Plus éxact: E(C_0) = \int_0^inf exp(-rT)(S_T - K) f(S_T) dS_T; avec S_T qui suit une loi log-normale, mais qui peut être approximé par N( S_T, sqrt(Var(S_T) ).
+Donc la distribution est connu, on peut faire en sorte, par exemple: 
+E(C_0) = exp(-rT)*max(E[S_T] - K, 0) + Ind[E[S_T]-K < 0] * \phi_masjuscule ( (-(S_T-K)/sqrt(Var(S_T)) )*Var(S_T)
+
 ***
 
 R
