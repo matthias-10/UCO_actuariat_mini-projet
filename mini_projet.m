@@ -1,3 +1,5 @@
+
+  
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ %
 % Valentin DE CRESPIN DE BILLY                      UTF-8 %
 % Matthias LANG                                30.11.2021 %
@@ -8,202 +10,210 @@
 
 % ~~~~~~ Mathematiques financieres: Mini-projet 1 ~~~~~~~ %
 
-%% ~~~~~~~~~~~~~~~~~~~~ Parametres ~~~~~~~~~~~~~~~~~~~~~ %%
-
+%%%%%  PARAMETRES SOUS-JACENT %%%%%
 S0 = 40;                % Prix initial du sous jacent
+K = 41;                 % Prix d'exercice de l'option
+
 r = 0.05;               % Taux d'interet sous risque neutre
-sigma = 0.01;           % Variance partie fixe
+sigma = 0.01;           % Volatilité du sous jacent
 
-n = 2^6;                % Nombre de intervalles
-T = 5;                  % Fin de la periode/exercice = tau
-Nd = 8;                 % Nombre des sous-intervalles 
+t0 = 0;                 % Debut de la periode
+T = 2;                  % Fin de la periode
 
-nt = 10000;            % Nombre de trajectoires
+n = 1000;                % Nombre de intervalles
 
-alpha = 0.05;           % niveau au risque
+%%%%%  PARAMETRES APPLICATION NUMERIQUE %%%%%
+
+nlambda = 500;          % nombre de sous jacent simulé pour le calcul du lambda
+n_simu = 1000000;       % nombre de sous jacent simulé
+
+nb = 700;               % nombre de valeur conservé pour la calcul du cours moyen de manière discrète
 
 
-%% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ %%
+%%%%       /!\ ne pas modifier le code en dessous /!\    
 
-nlambda = 500; % sim.s pour determiner le lambda des VC
+%%%%%  INITILISATION %%%%%
 
-if Nd > n/2-1
-    warning("Le nombre de sous-intervalles est tres petit")
-    fprintf('Il fallait Nd << n')
+dt = (T-t0)/n;
+t = t0:dt:T;
+
+
+%% ~~~~~~~~~~~~ Simulation de 15 trajectoires ~~~~~~~~~~~~~~ %%
+
+S = zeros(15,n+1);
+S(:,1) = S0;
+
+% Simulation pas a pas
+for i = 2:(n+1)
+    dW_t = normrnd(zeros(15,1),sqrt(dt));
+    dSi = S(:,i-1).*( r*dt + sigma*sqrt(S(:,i-1)).*dW_t );
+    S(:,i) = S(:,i-1) + dSi;
 end
 
-fprintf('\n ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ \n');
-fprintf('La programme a demarre a %s \n', datetime('now'));
-
-% K base sur le prix moyen d'une obligation sans risque
-syms func(x) 
-obligation(x) = S0*(1+r)^x;
-K = double( int(obligation,0,T)/T);
-bonds_T = obligation(T);
-
-fprintf('%d -> Prix initial du sous jacent \n', S0)
-fprintf(['%0.5g -> Prix univers risque neutre'...
-        'et continue a T\n'], bonds_T)
-fprintf('%0.5g -> Prix d''exercice de l''option \n', K);
-fprintf('calculation en cours . . .\n')
-
-dt = T/n;
-t = 0:dt:T;
+plot(t, S)
 
 
-%% ~~~~~~~~~~~~~~~~~ Monte-Carlo pur ~~~~~~~~~~~~~~~~~~~ %%
 
-tic
 
-S = S0 * ones(nt, 1);
+
+%% ~~~~~~~~~~~~ Méthode de Monte Carlo ~~~~~~~~~~~~~~ %%
+nb_trajectoires = n_simu;
+
+tic;
+%t_d = datetime('now');
+S = S0 * ones(nb_trajectoires,1);
 X = S/2;
 
-for i = 2:(n+1)
-    dW_t = normrnd(0, sqrt(dt), nt, 1);
-    S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
+% Simulation pas a pas
+for i = 1:n
+    dW_t = normrnd(0,sqrt(dt), nb_trajectoires,1);
+    S = S .* (1 + r*dt + sigma*sqrt(abs(S)).*dW_t );
     X = X+S;
 end
 
-X = (X - S/2)/n;
+X = X - S/2;
 
-C = exp(-r*T) * max(X-K,0);
+XT = X / n;
 
-% ~ Estimateur ~
-% C_inf * exp(-rT) est une martingale donc 
-% E[exp(-rT)*C_inf]= C_inf(S_0)
+XK = max(XT-K,0);
+MC = exp(-r * T ) * mean(XK);
+sd = exp(-r * T) * std(XK);
+MC_IC_inf = MC - 1.96 * sd / sqrt(nb_trajectoires);
+MC_IC_sup = MC + 1.96 * sd / sqrt(nb_trajectoires);
 
-% C
-C_est = mean(C);
-C_est_var = var(C)/nt; %/nt ?
-
-C_IC_inf = C_est + sqrt(C_est_var)*norminv(alpha/2);
-C_IC_sup = C_est + sqrt(C_est_var)*norminv(1-alpha/2);
-L = C_IC_sup-C_IC_inf;
 tps = toc;
 
 % fonction d'affichage 
-
-fprintf('\n')
-fprintf('%d trajectoires simules\n', nt);
-
-fprintf('\n')
-fprintf('estimateur Monte-Carlo: \n');
-
-disp(strcat(...
-{' C = '},sprintf('%05.3f',C_est),...
-{' IC = ['},sprintf('%05.3f',C_IC_inf),...
-{' , '},sprintf('%05.3f',C_IC_sup),...
+disp(strcat({'MC   : '},...
+{' P = '},sprintf('%05.3f',MC),...
+{' IC = ['},sprintf('%05.3f',MC_IC_inf),...
+{' , '},sprintf('%05.3f',MC_IC_sup),...
 {'] '},...
-{' largeur = '},sprintf('%05.3f',L),...
+{' largeur = '},sprintf('%05.3f',MC_IC_sup - MC_IC_inf),...
 {' t = '},sprintf('%05.3f',tps),...
-{' eff = '},sprintf('%05.3f',L * sqrt(tps))));
+{' eff = '},sprintf('%05.3f',(MC_IC_sup - MC_IC_inf)  *sqrt(tps))...
+));
 
 
-%% ~~~~~~~~~~~~ C_N: calcul avec X_T_prim ~~~~~~~~~~~~~~ %%
+%% ~~~~~~~~~~~~ Méthode de Monte Carlo avec réduction de la variance - variables antithétiques ~~~~~~~~~~~~~~ %%
 
 tic
-
-S = S0 * ones(nt, 1);
-X = zeros(nt, 1);
-l=1;
-
-for i = 2:(n+1)
-    dW_t = normrnd(0, sqrt(dt), nt, 1);
-    S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
-    if (i/n) > (l/Nd)
-        X = X+S;
-        l = l+1;
-    end
-end
-
-X = (X+S)/Nd;
-C = exp(-r*T) * max(X-K,0);
-
-% C
-C_N_est = mean(C);
-C_N_est_var = var(C)/nt; %/nt ?
-
-C_N_IC_inf = C_N_est + sqrt(C_N_est_var)*norminv(alpha/2);
-C_N_IC_sup = C_N_est + sqrt(C_N_est_var)*norminv(1-alpha/2);
-L = C_N_IC_sup-C_N_IC_inf;
-tps = toc;
-
-% fonction d'affichage 
-
-fprintf('pour X_prime: \n');
-
-disp(strcat(...
-{' C = '},sprintf('%05.3f',C_N_est),...
-{' IC = ['},sprintf('%05.3f',C_N_IC_inf),...
-{' , '},sprintf('%05.3f',C_N_IC_sup),...
-{'] '},...
-{' largeur = '},sprintf('%05.3f',L),...
-{' t = '},sprintf('%05.3f',tps),...
-{' eff = '},sprintf('%05.3f',L * sqrt(tps))));
-
-
-%% ~~~~~~~~~~~~~~~ variable antithetique ~~~~~~~~~~~~~~~ %%
-
-tic
-
-S = S0 * ones(nt, 1);
+%t_d = datetime('now');
+S = S0 * ones(nb_trajectoires,1);
 Sa = S;
 X = S/2;
 Xa = X;
 
 % Simulation pas a pas
 for i = 1:n
-    dW_t = normrnd(0, sqrt(dt), nt, 1);
+    dW_t = normrnd(0,sqrt(dt), nb_trajectoires,1);
     S = S .* (1 + r*dt + sigma*sqrt(abs(S)).*dW_t );
     Sa = Sa .* (1 + r*dt - sigma*sqrt(abs(Sa)).*dW_t );
-    X = X + S;
+    X = X+S;
     Xa = Xa + Sa;
 end
 
-X = (X - S/2)/n;
-Xa = (Xa - Sa/2)/n;
+X = X - S/2;
+Xa = Xa - Sa/2;
 
-Ca = exp(-r*T)*(max(Xa - K,0) + max(X-K,0))/2;
-Ca_est = mean(Ca);
-Ca_est_var = var(Ca)/(2*nt);
+XT = X / n;
+XTa = Xa/n;
 
-Ca_IC_inf = Ca_est + sqrt(Ca_est_var)*norminv(alpha/2);
-Ca_IC_sup = Ca_est + sqrt(Ca_est_var)*norminv(1-alpha/2);
+XK = max(XT-K,0);
+XKa = max(XTa - K,0);
+XK = (XK + XKa)/2;
+ANT = exp(-r * T ) * mean(XK);
+sd = exp(-r * T) * std(XK);
+A_IC_inf = ANT - 1.96 * sd / sqrt(nb_trajectoires);
+A_IC_sup = ANT + 1.96 * sd / sqrt(nb_trajectoires);
 
-L = Ca_IC_sup-Ca_IC_inf;
 tps = toc;
 
 % fonction d'affichage 
-
-fprintf('avec une variable antithetique: \n');
-
-disp(strcat(...
-{' C = '},sprintf('%05.3f',Ca_est),...
-{' IC = ['},sprintf('%05.3f',Ca_IC_inf),...
-{' , '},sprintf('%05.3f',Ca_IC_sup),...
+disp(strcat({'Ant  : '},...
+{' P = '},sprintf('%05.3f',ANT),...
+{' IC = ['},sprintf('%05.3f',A_IC_inf),...
+{' , '},sprintf('%05.3f',A_IC_sup),...
 {'] '},...
-{' largeur = '},sprintf('%05.3f',L),...
+{' largeur = '},sprintf('%05.3f',A_IC_sup - A_IC_inf),...
 {' t = '},sprintf('%05.3f',tps),...
-{' eff = '},sprintf('%05.3f',L * sqrt(tps))));
+{' eff = '},sprintf('%05.3f',(A_IC_sup - A_IC_inf)  *sqrt(tps))...
+));
 
 
-% efficace ?
-%co = cov([X Xa]);
-%fprintf(['La covariance entre X et la variable '...
-%        'antithetique est: %0.5g \n'], co(2,2))
+%% ~~~~~~~~~~~~ Méthode de Monte Carlo avec reduction de la variance - variables de contrôle 1 ~~~~~~~~~~~~~~ %%
+
+tic;
+%t_d = datetime('now');
+nb_trajectoires = nlambda;
+S = S0 * ones(nb_trajectoires,1);
+X = S/2;
+VC = zeros(nb_trajectoires, 1);
 
 
-%% ~~~~~~~~~~~~~ variable de controle 1 ~~~~~~~~~~~~~~~~ %%
+% Simulation pas a pas
+for i = 1:n
+    dW_t = normrnd(0,sqrt(dt), nb_trajectoires,1);
+    VC = VC + dW_t; % succesion des petits accroissements du brownien => VC et S sont correles
+    S = S .* (1 + r*dt + sigma*sqrt(abs(S)).*dW_t );
+    X = X+S;
+end
 
-% Variable de controle - aire sous un mouvement brownien
-% ~~~~~~~~~~~~~~~~ Calculer lambda ~~~~~~~~~~~~~~~~~~~~~~ %
+X = X - S/2;
 
-S = S0 * ones(nlambda,1);
-VC = S0 * ones(nlambda, 1);
+XT = X / n;
+
+XK = max(XT-K,0);
+A = cov(XK, VC);
+lambda = A(1,2)/A(2,2);
+
+nb_trajectoires = n_simu;
+S = S0 * ones(nb_trajectoires,1);
+X = S/2;
+VC = zeros(nb_trajectoires, 1);
+
+
+% Simulation pas a pas
+for i = 1:n
+    dW_t = normrnd(0,sqrt(dt), nb_trajectoires,1);
+    VC = VC + dW_t; % succesion des petits accroissements du brownien => VC et S sont correles
+    S = S .* (1 + r*dt + sigma*sqrt(abs(S)).*dW_t );
+    X = X+S;
+end
+
+X = X - S/2;
+XT = X / n;
+
+XK = max(XT-K,0) - lambda * (VC - 0);
+VC1 = exp(-r * T ) * mean(XK);
+sd = exp(-r * T) * std(XK);
+VC1_IC_inf = VC1 - 1.96 * sd / sqrt(nb_trajectoires);
+VC1_IC_sup = VC1 + 1.96 * sd / sqrt(nb_trajectoires);
+
+tps = toc;
+
+% fonction d'affichage 
+disp(strcat({'VC1  : '},...
+{' P = '},sprintf('%05.3f',VC1),...
+{' IC = ['},sprintf('%05.3f',VC1_IC_inf),...
+{' , '},sprintf('%05.3f',VC1_IC_sup),...
+{'] '},...
+{' largeur = '},sprintf('%05.3f',VC1_IC_sup - VC1_IC_inf),...
+{' t = '},sprintf('%05.3f',tps),...
+{' eff = '},sprintf('%05.3f',(VC1_IC_sup - VC1_IC_inf)  *sqrt(tps))...
+));
+
+
+%% ~~~~~~~~~~~~ Méthode de Monte Carlo avec reduction de la variance - variables de contrôle 2 ~~~~~~~~~~~~~~ %%
+
+tic;
+nb_trajectoires = nlambda;
+S = S0 * ones(nb_trajectoires,1);
+VC = S0 * ones(nb_trajectoires, 1);
 X = S/2;
 VC_aire = S/2;
-for i = 2:(n+1)
-    dW_t = normrnd(0, sqrt(dt), nlambda, 1);
+for i = 1:n
+    dW_t = normrnd(0, sqrt(dt), nb_trajectoires, 1);
     S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
     X = X+S;
     VC = VC + dW_t;
@@ -211,27 +221,26 @@ for i = 2:(n+1)
     % succesion des petits accroissements du brownien 
     % => VC et S sont correles
 end
-X = (X - S/2)/n;
-VC_aire = (VC_aire - VC/2)/n;
 
-C = exp(-r*T) * max(X-K,0);
-A = cov(C, VC_aire);
-sigma2 = (T/6*(2*n^2+3*n+1))/n^2;
-lambda = A(1,2)/sigma2; 
+X = X - S/2;
+XT = X / n;
 
-% en utilisant les est. empiriques
-% comparer avec les moments analytiques? -> voir pdf/VBA
+VC_aire = VC_aire - VC/2;
+VC_aire_T = VC_aire / n;
 
-% ~~~~~~~~~~~~~~~~~~~~~ simuler ~~~~~~~~~~~~~~~~~~~~~~~~~ %
+XK = max(XT-K,0);
+A = cov(XK, VC_aire_T);
+lambda = A(1,2)/A(2,2);
 
-tic;
 
-S = S0 * ones(nt,1);
-VC = S0 * ones(nt, 1);
+
+nb_trajectoires = n_simu;
+S = S0 * ones(nb_trajectoires,1);
+VC = S0 * ones(nb_trajectoires, 1);
 X = S/2;
-VC_aire = X;
-for i = 2:(n+1)
-    dW_t = normrnd(0, sqrt(dt), nt, 1);
+VC_aire = S/2;
+for i = 1:n
+    dW_t = normrnd(0, sqrt(dt), nb_trajectoires, 1);
     S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
     X = X+S;
     VC = VC + dW_t;
@@ -239,644 +248,297 @@ for i = 2:(n+1)
     % succesion des petits accroissements du brownien 
     % => VC et S sont correles
 end
-X = (X - S/2)/n;
-VC_aire = (VC_aire - VC/2)/n;
 
-C = exp(-r*T) * max(X-K,0);
+X = X - S/2;
+XT = X / n;
 
-Z = C - lambda * (VC_aire - S0);
+VC_aire = VC_aire - VC/2;
+VC_aire_T = VC_aire / n;
 
-C_1_est = mean(Z);
-C_1_est_var = var(Z)/nt;
-
-C_1_IC_inf = C_1_est + sqrt(C_1_est_var)*norminv(alpha/2);
-C_1_IC_sup = C_1_est + sqrt(C_1_est_var)*norminv(1-alpha/2);
-L = C_1_IC_sup - C_1_IC_inf;
+XK = max(XT-K,0)-lambda * (VC_aire_T - S0);
+VC2 = exp(-r * T ) * mean(XK);
+sd = exp(-r * T) * std(XK);
+VC2_IC_inf = VC2 - 1.96 * sd / sqrt(nb_trajectoires);
+VC2_IC_sup = VC2 + 1.96 * sd / sqrt(nb_trajectoires);
 
 tps = toc;
 
 % fonction d'affichage 
-
-fprintf('Variable de controle 1- aire sous W_t: \n');
-
-disp(strcat(...
-{' C = '},sprintf('%05.3f',C_1_est),...
-{' IC = ['},sprintf('%05.3f',C_1_IC_inf),...
-{' , '},sprintf('%05.3f',C_1_IC_sup),...
+disp(strcat({'VC2  : '},...
+{' P = '},sprintf('%05.3f',VC2),...
+{' IC = ['},sprintf('%05.3f',VC2_IC_inf),...
+{' , '},sprintf('%05.3f',VC2_IC_sup),...
 {'] '},...
-{' largeur = '},sprintf('%05.3f',L),...
+{' largeur = '},sprintf('%05.3f',VC2_IC_sup - VC2_IC_inf),...
 {' t = '},sprintf('%05.3f',tps),...
-{' eff = '},sprintf('%05.3f',L * sqrt(tps))));
-
-p = corr(X, VC_aire); 
-% optimum: lambda =~ corr(X,Y)*(Var(X)/Var(Y))^.5
-% efficace ?
-fprintf(['La correlation entre X et la variable '...
-        'de controle est: %0.5g\n'], p)
-fprintf(['La covariance empirique = %0.5g ; \n' ...
-         'La variance calculee = %0.5g\n'], A(2,2), sigma2)
+{' eff = '},sprintf('%05.3f',(VC2_IC_sup - VC2_IC_inf)  *sqrt(tps))...
+));
 
 
-%% ~~~~~~~~~~~~~ variable de controle 2 ~~~~~~~~~~~~~~~~ %%
-
-% Variable de controle - somme de dW_t: 
-% correspond a un mouvement brownien
-% ~~~~~~~~~~~~~~~~ Calculer lambda ~~~~~~~~~~~~~~~~~~~~~~ %
-
-S = S0 * ones(nlambda,1);
-VC = S0 * ones(nlambda, 1);
+%% ~~~~~~~~~~~~ Méthode de Monte Carlo avec reduction de la variance - variables de contrôle 3 ~~~~~~~~~~~~~~ %%
+tic;
+nb_trajectoires = nlambda;
+S = S0 * ones(nb_trajectoires,1);
+VC = S0 * ones(nb_trajectoires, 1);
 X = S/2;
-for i = 2:(n+1)
-    dW_t = normrnd(0, sqrt(dt), nlambda, 1);
+
+for i = 1:n
+    dW_t = normrnd(0, sqrt(dt), nb_trajectoires, 1);
     S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
     X = X+S;
-    VC = VC + dW_t; 
-    % succesion des petits accroissements du brownien 
-    % => VC et S sont correles
+    VC = VC .* (1 +r*dt + dW_t/10 );
 end
-X = (X - S/2)/n;
 
-C = exp(-r*T) * max(X-K,0);
-A = cov(C, VC);
-lambda = A(1,2)/A(2,2); 
+X = X - S/2;
+XT = X / n;
 
-% en utilisant les est. empiriques
-% comparer avec les moments analytiques? -> voir pdf/VBA
+XK = max(XT-K,0);
+A = cov(XK, VC);
+lambda = A(1,2)/A(2,2);
 
-% ~~~~~~~~~~~~~~~~~~~~~ simuler ~~~~~~~~~~~~~~~~~~~~~~~~~ %
+
+
+nb_trajectoires = n_simu;
+S = S0 * ones(nb_trajectoires,1);
+VC = S0 * ones(nb_trajectoires, 1);
+X = S/2;
+
+for i = 1:n
+    dW_t = normrnd(0, sqrt(dt), nb_trajectoires, 1);
+    S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
+    X = X+S;
+    VC = VC .* (1 +r*dt + dW_t/10 );
+end
+
+X = X - S/2;
+XT = X / n;
+
+E_VC = S0 * exp(r*T);
+
+XK = max(XT-K,0)-lambda * (VC - E_VC);
+VC3 = exp(-r * T ) * mean(XK);
+sd = exp(-r * T) * std(XK);
+VC3_IC_inf = VC3 - 1.96 * sd / sqrt(nb_trajectoires);
+VC3_IC_sup = VC3 + 1.96 * sd / sqrt(nb_trajectoires);
+
+tps = toc;
+
+% fonction d'affichage 
+disp(strcat({'VC3  : '},...
+{' P = '},sprintf('%05.3f',VC3),...
+{' IC = ['},sprintf('%05.3f',VC3_IC_inf),...
+{' , '},sprintf('%05.3f',VC3_IC_sup),...
+{'] '},...
+{' largeur = '},sprintf('%05.3f',VC3_IC_sup - VC3_IC_inf),...
+{' t = '},sprintf('%05.3f',tps),...
+{' eff = '},sprintf('%05.3f',(VC3_IC_sup - VC3_IC_inf)  *sqrt(tps))...
+));
+
+
+
+
+%% ~~~~~~~~~~~~ Méthode de Monte Carlo avec reduction de la variance - variables de contrôle 4 ~~~~~~~~~~~~~~ %%
+tic;
+nb_trajectoires = nlambda;
+S = S0 * ones(nb_trajectoires,1);
+VC = S0 * ones(nb_trajectoires, 1);
+X = S/2;
+
+for i = 1:n
+    dW_t = normrnd(0, sqrt(dt), nb_trajectoires, 1);
+    S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
+    X = X+S;
+    VC = VC .* (1 +r*dt + sigma * sqrt(S0) * dW_t );
+end
+
+X = X - S/2;
+XT = X / n;
+
+VC = max(VC-K,0);
+XK = max(XT-K,0);
+A = cov(XK, VC);
+lambda = A(1,2)/A(2,2);
+
+
+
+nb_trajectoires = n_simu;
+S = S0 * ones(nb_trajectoires,1);
+VC = S0 * ones(nb_trajectoires, 1);
+X = S/2;
+
+for i = 1:n
+    dW_t = normrnd(0, sqrt(dt), nb_trajectoires, 1);
+    S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
+    X = X+S;
+    VC = VC .* (1 +r*dt + sigma * sqrt(S0) * dW_t );
+end
+
+X = X - S/2;
+XT = X / n;
+
+z0 = (log(K/S0)-T*(r-0.5*(sigma*sqrt(S0))^2))/((sigma*sqrt(S0))*sqrt(T));
+d1 = (sigma*sqrt(S0)) * T^(1/2)-z0;
+d2 = -z0;
+E_VC = S0 * exp(T*(r-0.5*(sigma*sqrt(S0))^2)+0.5*T*(sigma*sqrt(S0))^2)*normcdf(d1) - K * normcdf(d2);
+
+VC = max(VC-K,0);
+XK = max(XT-K,0)-lambda * (VC - E_VC);
+VC4 = exp(-r * T ) * mean(XK);
+sd = exp(-r * T) * std(XK);
+VC4_IC_inf = VC4 - 1.96 * sd / sqrt(nb_trajectoires);
+VC4_IC_sup = VC4 + 1.96 * sd / sqrt(nb_trajectoires);
+
+tps = toc;
+
+% fonction d'affichage 
+disp(strcat({'VC4  : '},...
+{' P = '},sprintf('%05.3f',VC4),...
+{' IC = ['},sprintf('%05.3f',VC4_IC_inf),...
+{' , '},sprintf('%05.3f',VC4_IC_sup),...
+{'] '},...
+{' largeur = '},sprintf('%05.3f',VC4_IC_sup - VC4_IC_inf),...
+{' t = '},sprintf('%05.3f',tps),...
+{' eff = '},sprintf('%05.3f',(VC4_IC_sup - VC4_IC_inf)  *sqrt(tps))...
+));
+
+%% ~~~~~~~~~~~~ Méthode de Monte Carlo avec reduction de la variance - variables de contrôle 5 ~~~~~~~~~~~~~~ %%
 
 tic;
-
-S = S0 * ones(nt,1);
-VC = S0 * ones(nt, 1);
+nb_trajectoires = nlambda;
+S = S0 * ones(nb_trajectoires,1);
+VC = S0 * ones(nb_trajectoires, 1);
 X = S/2;
-for i = 2:(n+1)
-    dW_t = normrnd(0, sqrt(dt), nt, 1);
+for i = 1:n
+    dW_t = normrnd(0, sqrt(dt), nb_trajectoires, 1);
     S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
     X = X+S;
     VC = VC + dW_t;
-end
-X = (X - S/2)/n;
-C = exp(-r*T) * max(X-K,0);
-
-Z = C - lambda * (VC - S0);
-
-C_2_est = mean(Z);
-C_2_est_var = var(Z)/nt;
-
-C_2_IC_inf = C_2_est + sqrt(C_2_est_var)*norminv(alpha/2);
-C_2_IC_sup = C_2_est + sqrt(C_2_est_var)*norminv(1-alpha/2);
-L = C_2_IC_sup - C_2_IC_inf;
-
-tps = toc;
-
-% fonction d'affichage 
-
-fprintf('\n')
-fprintf('Variable de controle 2 - somme de dW_t: \n');
-
-disp(strcat(...
-{' C = '},sprintf('%05.3f',C_2_est),...
-{' IC = ['},sprintf('%05.3f',C_2_IC_inf),...
-{' , '},sprintf('%05.3f',C_2_IC_sup),...
-{'] '},...
-{' largeur = '},sprintf('%05.3f',L),...
-{' t = '},sprintf('%05.3f',tps),...
-{' eff = '},sprintf('%05.3f',L * sqrt(tps))));
-
-%p = corr(X, VC); 
-% optimum: lambda =~ corr(X,Y)*(Var(X)/Var(Y))^.5
-% efficace ?
-%fprintf(['La correlation entre X et la variable '...
-%        'de controle est: %0.5g\n'], p)
-
-
-%% ~~~~~~~~~~~~~ variable de controle 3 ~~~~~~~~~~~~~~~~ %%
-
-% mouvement pareil au prix des actions decale
-% ~~~~~~~~~~~~~~~~ Calculer lambda ~~~~~~~~~~~~~~~~~~~~~~ %
-% S = S0*ones(n+1,1);
-% VC = S0*ones(n+1,1);
-% 
-% i = 2;
-% dW_t = normrnd(0, sqrt(dt), 1, 1);
-% S(i) = S(i-1) .*(1 +r*dt + sigma*sqrt(abs(S(i-1))).*dW_t );
-% VC(i) = S0 * (1+ r*dt);
-% 
-% for i = 3:(n+1)
-%     j = mod(i,2);
-%     dW_t = normrnd(0, sqrt(dt), 1, 1);
-%     S(i) = S(i-1) .*(1 +r*dt + sigma*sqrt(abs(S(i-1))).*dW_t );
-% 
-%     VC(i) = VC(i-1) .*(1 +r*dt + dW_t/10 );
-%     VC(i) = VC(i);
-% end
-% plot(S)
-% hold on
-% plot(VC)
-% hold off
-
-S = S0 * ones(nlambda,1);
-VC = S0 * ones(nlambda, 1);
-
-X = S/2;
-for i = 2:(n+1)
-    %j = mod(i,2);
-    dW_t = normrnd(0, sqrt(dt), nlambda, 1);
-    S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
-    X = X+S;
-
-    %VC(:,3) = VC(:,j+1) .*(1 +r*dt + dW_t/10 );
-    %VC(:,~j+1) = VC(:,3);
-    VC = VC .* (1 +r*dt + dW_t/10 );
-end
-X = (X - S/2)/n;
-
-C = exp(-r*T) * max(X-K,0);
-A = cov(C, VC);
-lambda = A(1,2)/A(2,2); 
-
-
-% E(VC)
-E_VC = S0;
-for i = 2:(n+1)
-    E_VC = E_VC * (1 + r*dt);
-end
-
-% pour comparaison
-double(bonds_T);
-
-% en utilisant les est. empiriques
-% comparer avec les moments analytiques? -> voir pdf/VBA
-
-% ~~~~~~~~~~~~~~~~~~~~~ simuler ~~~~~~~~~~~~~~~~~~~~~~~~~ %
-
-tic;
-S = S0 * ones(nt,1);
-VC = S0 * ones(nt, 1);
-
-X = S/2;
-for i = 2:(n+1)
-    %j = mod(i,2);
-    dW_t = normrnd(0, sqrt(dt), nt, 1);
-    S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
-    X = X+S;
-
-    %VC(:,3) = VC(:,j+1) .*(1 +r*dt + dW_t/10 );
-    %VC(:,~j+1) = VC(:,3);
-    VC = VC .* (1 +r*dt + dW_t/10 );
-end
-X = (X - S/2)/n;
-
-
-C = exp(-r*T) * max(X-K,0);
-
-Z = C - lambda * (VC - E_VC);
-
-C_3_est = mean(Z);
-C_3_est_var = var(Z)/nt;
-
-C_3_IC_inf = C_3_est + sqrt(C_3_est_var)*norminv(alpha/2);
-C_3_IC_sup = C_3_est + sqrt(C_3_est_var)*norminv(1-alpha/2);
-L = C_3_IC_sup - C_3_IC_inf;
-
-tps = toc;
-
-% fonction d'affichage 
-
-fprintf('Variable de controle 3 - prix decales: \n');
-
-disp(strcat(...
-{' C = '},sprintf('%05.3f',C_3_est),...
-{' IC = ['},sprintf('%05.3f',C_3_IC_inf),...
-{' , '},sprintf('%05.3f',C_3_IC_sup),...
-{'] '},...
-{' largeur = '},sprintf('%05.3f',L),...
-{' t = '},sprintf('%05.3f',tps),...
-{' eff = '},sprintf('%05.3f',L * sqrt(tps))));
-
-p = corr(X, VC); 
-% optimum: lambda =~ corr(X,Y)*(Var(X)/Var(Y))^.5
-% efficace ?
-fprintf(['La correlation entre X et la variable '...
-        'de controle est: %0.5g\n'], p)
-
-%% ~~~~~~~~~~~~~ variable de controle 4 ~~~~~~~~~~~~~~~~ %%
-
-% calculer des option europeenes, mais avec des actions:
-% S = S .*(1 +r*dt + sigma*sqrt(S0)*dW_t );
-% sigma et r soient connu ici.
-% alors qu'on puisse calculer leur payoff avec Balckes-Sch.
-% ~~~~~~~~~~~~~~~~ Calculer lambda ~~~~~~~~~~~~~~~~~~~~~~ %
-
-S = S0 * ones(nlambda,1);
-VC = S;
-X = S/2;
-% VC = zeros(nlambda,1);
-for i = 2:(n+1)
-    dW_t = normrnd(0, sqrt(dt), nlambda, 1);
-    S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
-    X = X+S;
-
-    VC = VC .*(1 +r*dt + sigma*sqrt(S0).*dW_t );
-end
-X = (X - S/2)/n;
-%Black-scholes: P_T, w_t = W_T
-% sig_vc = (sigma*sqrt(S0));
-% a=S0*exp(T*(r-0.5*sig_vc^2) + sig_vc*VC);
-% b=VC+S0;
-% apres B-S a=b?
-
-d1 = log(VC/K);
-d2 = d1; % a temps T
-C_VC = S.*normcdf(d1) - K*exp(-r*T).*normcdf(d2);
-
-C = exp(-r*T) * max(X-K,0);
-A = cov(C, C_VC);
-lambda = A(1,2)/A(2,2); 
-
-% l'esperance de la VC
-E_C_VC = S0;
-for i=2:n
-    E_C_VC = E_C_VC*(1 + r*dt);
-end
-E_C_VC = max(double(E_C_VC-K),0);
-
-% ~~~~~~~~~~~~~~~~~~~~~ simuler ~~~~~~~~~~~~~~~~~~~~~~~~~ %
-
-tic;
-
-S = S0 * ones(nt,1);
-X = S/2;
-VC = S;
-
-for i = 2:(n+1)
-    dW_t = normrnd(0, sqrt(dt), nt, 1);
-    S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
-    X = X+S;
-
-    VC = VC .*(1 +r*dt + sigma*sqrt(S0).*dW_t );
-end
-X = (X - S/2)/n;
-
-d1 = log(VC/K);
-d2 = d1; % a temps T
-C_VC = S.*normcdf(d1) - K*exp(-r*T).*normcdf(d2);
-C_VC = max(C_VC, 0);
-C = exp(-r*T) * max(X-K,0);
-
-%Z = C - lambda * (C_VC - E_C_VC);
-Z = C - lambda * (C_VC -mean(C_VC)); 
-
-C_4_est = mean(Z);
-C_4_est_var = var(Z)/nt;
-
-C_4_IC_inf = C_4_est + sqrt(C_4_est_var)*norminv(alpha/2);
-C_4_IC_sup = C_4_est + sqrt(C_4_est_var)*norminv(1-alpha/2);
-L = C_4_IC_sup - C_4_IC_inf;
-
-tps = toc;
-
-% fonction d'affichage 
-
-fprintf('\n')
-fprintf('Variable de controle 4 - option europeenne: \n');
-
-disp(strcat(...
-{' C = '},sprintf('%05.3f',C_4_est),...
-{' IC = ['},sprintf('%05.3f',C_4_IC_inf),...
-{' , '},sprintf('%05.3f',C_4_IC_sup),...
-{'] '},...
-{' largeur = '},sprintf('%05.3f',L),...
-{' t = '},sprintf('%05.3f',tps),...
-{' eff = '},sprintf('%05.3f',L * sqrt(tps))));
-
-p = corr(C, C_VC); 
-% optimum: lambda =~ corr(X,Y)*(Var(X)/Var(Y))^.5
-% efficace ?
-fprintf(['La correlation entre X et la variable '...
-        'de controle est: %0.5g\n'], p)
-
-%% ~~~~~~~~~~~~~ variable de controle 5 ~~~~~~~~~~~~~~~~ %%
-
-% comme VC2 mais exp(W_T); W_0 = 0
-% ~~~~~~~~~~~~~~~~ Calculer lambda ~~~~~~~~~~~~~~~~~~~~~~ %
-
-S = S0 * ones(nlambda,1);
-VC = zeros(nlambda, 1);
-X = S/2;
-for i = 2:(n+1)
-    dW_t = normrnd(0, sqrt(dt), nlambda, 1);
-    S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
-    X = X+S;
-    VC = VC + dW_t; 
     % succesion des petits accroissements du brownien 
     % => VC et S sont correles
 end
-X = (X - S/2)/n;
-%VC = sign(VC).*exp(abs(VC));
+
+X = X - S/2;
+XT = X / n;
+
 VC = exp(VC/S0);
-C = exp(-r*T) * max(X-K,0);
-A = cov(C, VC);
-lambda = A(1,2)/A(2,2); 
 
-% en utilisant les est. empiriques
-% comparer avec les moments analytiques? -> voir pdf/VBA
+XK = max(XT-K,0);
+A = cov(XK, VC);
+lambda = A(1,2)/A(2,2);
 
-% ~~~~~~~~~~~~~~~~~~~~~ simuler ~~~~~~~~~~~~~~~~~~~~~~~~~ %
 
-tic;
 
-S = S0 * ones(nt,1);
-VC = zeros(nt, 1);
+nb_trajectoires = n_simu;
+S = S0 * ones(nb_trajectoires,1);
+VC = S0 * ones(nb_trajectoires, 1);
 X = S/2;
-for i = 2:(n+1)
-    dW_t = normrnd(0, sqrt(dt), nt, 1);
+for i = 1:n
+    dW_t = normrnd(0, sqrt(dt), nb_trajectoires, 1);
     S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
     X = X+S;
-    VC = VC + dW_t; 
+    VC = VC + dW_t;
     % succesion des petits accroissements du brownien 
     % => VC et S sont correles
 end
-X = (X - S/2)/n;
+
+X = X - S/2;
+XT = X / n;
+
 VC = exp(VC/S0);
-%VC = sign(VC).*exp(abs(VC));
-C = exp(-r*T) * max(X-K,0);
 
-Z = C - lambda * (VC - exp(T/(2*S0^2)));
-
-C_5_est = mean(Z);
-C_5_est_var = var(Z)/nt;
-
-C_5_IC_inf = C_5_est + sqrt(C_5_est_var)*norminv(alpha/2);
-C_5_IC_sup = C_5_est + sqrt(C_5_est_var)*norminv(1-alpha/2);
-L = C_5_IC_sup - C_5_IC_inf;
+XK = max(XT-K,0)-lambda * (VC - exp(T/(2*S0^2)+1));
+VC5 = exp(-r * T ) * mean(XK);
+sd = exp(-r * T) * std(XK);
+VC5_IC_inf = VC5 - 1.96 * sd / sqrt(nb_trajectoires);
+VC5_IC_sup = VC5 + 1.96 * sd / sqrt(nb_trajectoires);
 
 tps = toc;
 
 % fonction d'affichage 
-
-fprintf('\n')
-fprintf('Variable de controle 5 - exp(W_T): \n');
-
-disp(strcat(...
-{' C = '},sprintf('%05.3f',C_5_est),...
-{' IC = ['},sprintf('%05.3f',C_5_IC_inf),...
-{' , '},sprintf('%05.3f',C_5_IC_sup),...
+disp(strcat({'VC5  : '},...
+{' P = '},sprintf('%05.3f',VC5),...
+{' IC = ['},sprintf('%05.3f',VC5_IC_inf),...
+{' , '},sprintf('%05.3f',VC5_IC_sup),...
 {'] '},...
-{' largeur = '},sprintf('%05.3f',L),...
+{' largeur = '},sprintf('%05.3f',VC5_IC_sup - VC5_IC_inf),...
 {' t = '},sprintf('%05.3f',tps),...
-{' eff = '},sprintf('%05.3f',L * sqrt(tps))));
-
-p = corr(X, VC); 
-% optimum: lambda =~ corr(X,Y)*(Var(X)/Var(Y))^.5
-% efficace ?
-fprintf(['La correlation entre X et la variable '...
-        'de controle est: %0.5g\n'], p)
+{' eff = '},sprintf('%05.3f',(VC5_IC_sup - VC5_IC_inf)  *sqrt(tps))...
+));
 
 
-%% ~~~~~~~~~~~~~ variable de controle 6 ~~~~~~~~~~~~~~~~ %%
+%% ~~~~~~~~~~~~ Méthode de Monte Carlo sans prendre toutes les valeurs  ~~~~~~~~~~~~~~ %%
 
-% calculer des option asiatiques, mais avec des actions:
-% S = S .*(1 +r*dt + sigma*sqrt(S0)*dW_t );
-% sigma et r soient connu ici.
-% alors qu'on puisse calculer leur payoff avec Balckes-Sch.
+tic
 
+S = S0 * ones(nb_trajectoires, 1);
+X = zeros(nb_trajectoires, 1);
+l=1;
 
-%% ~~~~~~~~~~~~~~~~~~~~~ graphes ~~~~~~~~~~~~~~~~~~~~~~~ %%
-
-% 1:   graphes de S; 
-% 2-3: ecdf de C_inf et C_N; 
-% 4-5: boxplot des estimateurs
-% 6:   deux graphiques qui demontrent une problematique
-% 7:   intervalles de confiance
-
-% simuler n_aff graphes pour affichage
-n_aff = 10;
-S_aff = S0*ones(n_aff, n+1);
-for i = 2:(n+1)
-    dWt = normrnd(zeros(n_aff, 1),sqrt(dt));
-    S_aff(:,i) = S_aff(:,i-1).*...
-                (1 + r*dt+sigma*sqrt(S_aff(:,i-1)).*dWt);
-end
+a = n/nb;
 
 
-G = "g";
-%G = "q" %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%P = input(['\n' ...
-%    'Pour afficher n''importe quel graphique, tapez ' ...
-%    'son numero <1-8> ou [Enter]. \n' ...
-%    'Pour quitter tapez plusieures fois [Enter]:\n'] );
-P=8;
-
-if isstring(P) || isempty(P)
-    P = 1;
-else 
-    if ~ismember(P,1:8)
-        P = 1;
+for i = 1:n
+    dW_t = normrnd(0, sqrt(dt), nb_trajectoires, 1);
+    S = S .*(1 +r*dt + sigma*sqrt(abs(S)).*dW_t );
+    if (i/n) >= (l/nb)
+        X = X+S;
+        l = l+1;
     end
 end
+XK = (X)/nb;
+XK = max(XK-K,0);
 
-while G~="q"
-    disp("[Enter] pour continuer")
-    switch P
-    case 1
-        fprintf('< 1: quelques premiers graphes de S >')
-        figure(1)
-        plot([0 T],[K K], ':k', 'LineWidth',2)
-        hold on
-        plot(t, obligation(t))
-        plot(t, S_aff,'b')
-        %plot(t, S_anti_aff, 'r:')
-        %plot(t, VC_aff(1:nt_a,:),'g--')
-        % probleme si nt < nt_a
-        hold off
-        % pour comparison, si j'epargne pour le taux r:
-        %plot([0 T], [S0 S0*(1+r)^T],"--k"); %obl.
-        %1% fplot(obligation, [0 T], "-k"); 
-        xlabel("t")
-        legend("K, le prix d''exercice", ...
-               "obligation (sans risque)", ...
-               "les prix S_t des actions",...
-               "Location","northwest");
-        
-        if n*nt > 100*1000000; P=7; end
-        P=P+1; input('\n\n');
+C = exp(-r*T) * mean(XK);
+sd = exp(-r * T) * std(XK);
+C_IC_inf = C - 1.96 * sd / sqrt(nb_trajectoires);
+C_IC_sup = C + 1.96 * sd / sqrt(nb_trajectoires);
+
+tps = toc;
+
+% fonction d'affichage 
+disp(strcat({'C    : '},...
+{' P = '},sprintf('%05.3f',C),...
+{' IC = ['},sprintf('%05.3f',C_IC_inf),...
+{' , '},sprintf('%05.3f',C_IC_sup),...
+{'] '},...
+{' largeur = '},sprintf('%05.3f',C_IC_sup - C_IC_inf),...
+{' t = '},sprintf('%05.3f',tps),...
+{' eff = '},sprintf('%05.3f',(C_IC_sup - C_IC_inf)  *sqrt(tps))...
+));
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+w = 8; % nombre des IC affichees
+    %fprintf('< 8: ICs (normales) >')
+    plot([MC ANT VC1 VC2 VC3 VC4 VC5 C], ...
+        1:w, 'x')
+    %line([K K],[0 5],'Color','green','LineStyle','--')
+   
+    line([MC_IC_inf MC_IC_sup],[1 1])
+    line([A_IC_inf A_IC_sup],[2 2])
+    line([VC1_IC_inf VC1_IC_sup],[3 3])
+    line([VC2_IC_inf VC2_IC_sup],[4 4])
+    line([VC3_IC_inf VC3_IC_sup],[5 5])
+    line([VC4_IC_inf VC4_IC_sup],[6 6])
+    line([VC5_IC_inf VC5_IC_sup],[7 7])
+    line([C_IC_inf C_IC_sup],[8 8])
+ 
+    grid on
+
+    %line([1.362 1.362],[0.5 7.5])
+
+    legend("estimateurs",'IC')
+%     L1 = C_IC_sup - C_IC_inf;
+%     L2 = C_est - K;
+%     limf = [C_IC_inf C_IC_sup] + max(L1,L2)*[-1 1];
+%     xlim(limf)
+      ylim([0 w+2])
+      yticks(1:w)
+
+    yticklabels({'MC','C_a','C_{VC1}','C_{VC2}',...
+                 'C_{VC3}','C_{VC4}','C_{VC5}', 'C'})
+    %title('Intervalles de confiance (sauf C)')
     
-    case 2
-        if n*nt > 100*1000000; G="q"; end
-        
-        fprintf(['< 2: fonction de distribution ' ...
-            'cumulative estime'  ...
-            '\n C(T) pour X_{infinie} de C_infinie >'])
-        figure(1)
-        % E_\pi (e^-rT (X_T - K)^+ / F_O) ~ 1/nt \sum{C(T)}
-        %histogram( C_inf );
-        ecdf( X );
-        hold on 
-        plot([K K],[0 1], 'k')
-        plot([min(X) max(X)], [.5 .5],':b')
-        x_ax = min(X):.1:max(X); 
-        % probleme si max-min < .1
-        nor = normcdf(x_ax,X_mu,sqrt(v));
-        plot(x_ax,nor,':r')
-        hold off
-        legend("ecdf", "K", "P=50%", "cdf normal")
-        title("ecdf X(T) pour X_{infinie}");
-        
-        P=P+1; input('\n\n');
-
-    case 3
-        if n*nt > 100*1000000; G="q"; end
-        
-        fprintf(['< 3: fonction de distribution ' ...
-            'cumulative estime'  ...
-            '\n C(T) pour X_{infinie} de C_N >'])
-        figure(1)
-        ecdf( X_prim );
-        hold on 
-        plot([K K],[0 1], 'k')
-        plot([min(X_prim) max(X_prim)], [.5 .5],':b')
-        hold off
-        legend("ecdf", "K", "P=50%")
-        title("ecdf X(T) pour X_{N}");
-        
-        P=P+1; input('\n\n');
-
-    case 4
-        if n*nt > 100*1000000; G="q"; end
-        
-        fprintf(['< 4: boxplot de l''estimateur ' ...
-                 'C_{infinie} >'])
-        figure(1)
-        boxplot( C_0 );
-        xticks({})
-        title('boxplot de C_{infinie} a T')
-        ylabel('C_T, valeurs actualisees')
-        
-        P=P+1; input('\n\n');
-
-    case 5
-        if n*nt > 100*1000000; G="q"; end
-        
-        fprintf('< 5: boxplot de l''estimateur C_{N} >')
-        figure(1)
-        boxplot ( C_0_prim );
-        xticks({})
-        title('boxplot de C_{N} a T')
-        
-        P=P+1; input('\n\n');
-    
-    case 6
-        if n*nt > 100*1000000; G="q"; end
-        
-        fprintf('< 6: L''IC de la variable de controle')
-        fprintf('\n suivant pour Z a aide de VC')
-        
-        plot(sort(Z_vc))
-        hold on 
-        plot(sort(X))
-        plot([1 na],[K K], '--k', 'LineWidth',1)
-        hold off
-        title("X vs variable de controle Z")
-        xlabel("nt")
-        legend("Z","X","K")
-        
-        input('\n... 6.5 < scatter >');
-        
-        scatter(X,X_vc);
-        hold on; 
-        plot([min(X) max(X)],[min(X) max(X)],'-k');
-        plot(X_mu,EY_vc,'*r','LineWidth',2);
-        legend("X-X_{vc} en pair",...
-               "X=X_{vc}",...
-               "les moyennes"); 
-        hold off
-        xlabel("X")
-        ylabel("X_{vc}")
-        
-        P=P+1; input('\n');
-
-    case 7
-        if n*nt > 100*1000000; G="q"; end
-        
-        fprintf('< 7: L''IC de la variable de controle ')
-        fprintf('\n suivant pour Z a aide de X_a')
-        
-        plot(sort(Z_a))
-        hold on 
-        plot(sort(X))
-        plot([1 na],[K K], '--k', 'LineWidth',1)
-        hold off
-        title("X vs variable de controle Z")
-        xlabel("nt")
-        legend("Z","X","K")
-        
-        input('\n... 7.5 < scatter >');
-        
-        scatter(X,Y);
-        hold on; 
-        plot([min(X) max(X)],[min(X) max(X)],'-k');
-        plot(X_mu,EY_a,'*r','LineWidth',2);
-        legend("X-Y en pair","X=Y","les moyennes"); 
-        hold off
-        xlabel("X")
-        ylabel("Y avec laquelle la v.c. est construite")
-        
-        P=P+1; input('\n');
-    case 8
-        
-        w = 7; % nombre des IC affichees
-        %fprintf('< 8: ICs (normales) >')
-        plot([C_est Ca_est C_1_est C_2_est ...
-              C_3_est C_4_est C_5_est], ...
-            1:w, 'x')
-        %line([K K],[0 5],'Color','green','LineStyle','--')
-       
-        line([C_IC_inf C_IC_sup],[1 1])
-        line([Ca_IC_inf Ca_IC_sup],[2 2])
-        line([C_1_IC_inf C_1_IC_sup],[3 3])
-        line([C_2_IC_inf C_2_IC_sup],[4 4])
-        line([C_3_IC_inf C_3_IC_sup],[5 5])
-        line([C_4_IC_inf C_4_IC_sup],[6 6])
-        line([C_5_IC_inf C_5_IC_sup],[7 7])
-        
-        legend("estimateurs",...
-            'C','C_a','C_{VC1}','C_{VC2}',...
-            'C_{VC3}','C_{VC4}','C_{VC5}')
-        L1 = C_IC_sup - C_IC_inf;
-        L2 = C_est - K;
-        limf = [C_IC_inf C_IC_sup] + max(L1,L2)*[-1 1];
-        %xlim(limf)
-        ylim([0 w+1])
-        yticks(1:w)
-
-        yticklabels({'C','C_a','C_{VC1}','C_{VC2}',...
-                     'C_{VC3}','C_{VC4}','C_{VC5}'})
-        %title('Intervalles de confiance (sauf C)')
-        
-        %P=P+1;
-        G="q";
-    case 9
-        if n*nt > 100*1000000; G="q"; end
-        
-        P=input(['\n ' ...
-            'Pour afficher n''importe quel graphique, ' ...
-            'tapez son numero <1-8> \n']);
-        if ismember(P, 1:8)
-            fprintf("Vous avez choisi: ")
-        else
-            G="q";
-        end
-    otherwise
-        G="q";
-    end
-end
-
-if n*nt > 100*1000000
-    warning("Donnees trop grandes pour affichage"); 
-end
-
-%fprintf("\n ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~\n")
-%fprintf(  " ~   MERCI POUR VOTRE ATTENTION    ~")
-fprintf("\n ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~\n")
+    %P=P+1;
+    G="q";
